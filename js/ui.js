@@ -1182,11 +1182,10 @@ const UI = (() => {
      sie eine Minute nach dem Sporenflug 763 Tage. Dort steht stattdessen der
      Aufbau-Stand. */
   function reifeRestzeit() {
-    const noetig = E.lifetimeForLevel(S.level + 1) / Math.max(1e-12, E.m.xp);
-    const fehlt = noetig - S.lifetime;
-    if (fehlt <= 0) return 'gleich so weit';
-    if (E.total <= 0) return '';
-    return 'noch ~' + U.fmtTimeShort(fehlt / E.total);
+    const r = E.reifeStand();
+    if (r.fehlt <= 0) return 'gleich so weit';
+    if (r.rate <= 0) return '';
+    return 'noch ~' + U.fmtTimeShort(r.fehlt / r.rate);
   }
 
   /** Laufende Buffs der goldenen Sporen mit Restzeit. */

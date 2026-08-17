@@ -43,6 +43,7 @@ const Save = (() => {
       idleTime: 0,
       goldTimer: 130,
       rateVorReset: 0,      // Produktion vor dem letzten Sporenflug (Aufbau-Anzeige)
+      reifeBonus: 0,        // erarbeitete Reifung aus zeitlich begrenzten Buffs
       lastSave: Date.now(),
       lastSeen: Date.now(),
       seenTabs: [],

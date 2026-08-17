@@ -76,7 +76,10 @@ zurück ins Startmenü, um den Spielstand zu wechseln.
 ## Dinge, die man leicht übersieht
 
 - **Goldene Sporen** driften gelegentlich über den Bildschirm. Anklicken gibt einen
-  zeitlich begrenzten Boost — meist etwas Kleines, manchmal Produktion ×7.
+  zeitlich begrenzten Boost — meist etwas Kleines, manchmal Produktion ×7. Der
+  *Reifeschub* lässt den Reifegrad-Balken zwei Minuten lang fünfmal schneller
+  laufen; er verschenkt keine Stufen, sondern beschleunigt, was du in dieser Zeit
+  erzeugst.
 - **Ruhewachstum**: Wenn du 90 Sekunden nicht klickst, steigt die Produktion. Der
   Ast *Zersetzung* baut das aus. Nichtstun ist eine gültige Strategie.
 - **Offline** wächst das Netz weiter — auch wenn du das Fenster nur zur Seite

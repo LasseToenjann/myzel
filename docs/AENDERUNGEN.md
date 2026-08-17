@@ -1,5 +1,41 @@
 # Änderungsverlauf
 
+## v2.5 – Der Reifeschub verschenkt keine Reifegrade mehr
+
+Die goldene Spore **Reifeschub** multipliziert die Reifung 120 Sekunden lang mit
+fünf. Der Reifegrad wurde aber aus `Biomasse × Reifung` gerechnet — der
+Multiplikator wirkte damit **rückwirkend auf die gesamte je erzeugte Biomasse**.
+Gemessen bei Reifegrad 22:
+
+| | Reifegrad | Balken |
+|---|---|---|
+| vor dem Schub | 22 | 36,5 % |
+| während des Schubs | **24** | 11,3 % |
+| nach dem Schub | **24** | **0,0 %** |
+
+Zwei Stufen aus dem Nichts, dauerhaft — und danach stand der Balken bei null,
+bis die Biomasse nachgezogen war. Bei einem Spielstand mit drei so verschenkten
+Stufen wären das über **einen Tag** ohne jede sichtbare Bewegung gewesen.
+
+**Neu:** Der dauerhafte Reifegrad rechnet nur noch mit dem Multiplikator aus
+Skills und Mutationen. Was ein zeitlich begrenzter Buff zusätzlich bringt, wird
+während seiner Laufzeit *erarbeitet* — proportional zu dem, was in diesen zwei
+Minuten wirklich produziert wird — und in `S.reifeBonus` gesammelt.
+
+Damit springt nichts mehr aus dem Nichts, der Balken läuft während des Schubs
+sichtbar schneller und danach normal weiter. Gemessen bei voller Produktion:
+120 Sekunden Reifeschub bringen den Balken von 36,5 % auf 44,0 %, ohne Schub auf
+38,1 %.
+
+**Nichts wird weggenommen.** Der Reifegrad sinkt nicht, und Spielstände, die
+schon Stufen aus alten Reifeschüben haben, bekommen den fehlenden Reifewert
+einmalig gutgeschrieben — sonst hätten sie den toten Balken behalten.
+
+Die Skills 🧺 *Kompost*, 📖 *Reifebeschleunigung* und die Mutation wirken
+unverändert weiter, auch weiterhin rückwirkend. Nachgerechnet über 24 Stufen:
+Die Dauer jeder einzelnen Stufe ist **exakt dieselbe** wie vorher.
+
+
 ## v2.4.2 – Die Aufbau-Anzeige greift auch für bestehende Spielstände
 
 Der Bezugswert für den Wiederaufbau (`S.rateVorReset`) wurde nur beim

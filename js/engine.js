@@ -18,7 +18,7 @@ const E = (() => {
       cost: [1, 1, 1, 1, 1, 1, 1, 1],
       costScale: 0,
       click: 1, clickPct: 0.05, autoClick: 0,
-      xp: 1,
+      xp: 1, xpDauer: 1,
       spore: 1, sporeExp: 0,
       offlineH: 4, offlineEff: 0.45, offlineSpore: false,
       idleMax: 0,
@@ -88,6 +88,12 @@ const E = (() => {
     if (S.sporeLife > 0) m.global *= sporeMult(S.sporeLife);
     // 6) Symbiose-Punkte (Lebenszeit)
     if (S.spLife > 0) m.global *= 1 + 0.6 * Math.pow(Math.log10(1 + S.spLife), 2.6);
+    /* Der Multiplikator aus Skills und Mutationen - ohne die zeitlich
+       begrenzten Buffs. Der dauerhafte Reifegrad rechnet nur mit diesem
+       Wert, sonst schenkte ein zweiminuetiger Buff rueckwirkend auf die
+       gesamte bisherige Biomasse mehrere Stufen, die nie wieder weggehen. */
+    m.xpDauer = m.xp;
+
     // 8) Aktive Buffs (goldene Sporen)
     S.buffs = S.buffs.filter(b => b.until > now);
     S.buffs.forEach(b => {
@@ -112,7 +118,15 @@ const E = (() => {
     clickGain = (1 + total * m.clickPct) * m.click;
 
     // Reifegrad (nur nach oben)
-    const lv = levelFor(S.lifetime * m.xp);
+    /* Spielstaende aus der Zeit, in der ein Reifeschub Stufen verschenkte,
+       stehen sonst mit einem Reifegrad da, den ihr Reifewert nicht deckt -
+       der Balken bliebe stundenlang bei null. Einmalig auffuellen; genommen
+       wird dabei niemandem etwas. */
+    if (S.level > 0 && reifeWert() < lifetimeForLevel(S.level)) {
+      S.reifeBonus = (S.reifeBonus || 0) + (lifetimeForLevel(S.level) - reifeWert());
+    }
+
+    const lv = levelFor(reifeWert());
     if (lv > S.level) {
       const gained = lv - S.level;
       S.level = lv;
@@ -142,10 +156,21 @@ const E = (() => {
     return Math.max(0, Math.floor((Math.log10(eff) - 1) / LVL_STEP));
   }
   function lifetimeForLevel(L) { return Math.pow(10, 1 + LVL_STEP * L); }
+  /** Der Stand, an dem der Reifegrad haengt: die erzeugte Biomasse mit dem
+      dauerhaften Multiplikator, dazu was in Buff-Zeiten erarbeitet wurde. */
+  function reifeWert() { return S.lifetime * m.xpDauer + (S.reifeBonus || 0); }
+
   function levelProgress() {
-    const eff = Math.max(10, S.lifetime * m.xp);
+    const eff = Math.max(10, reifeWert());
     const cur = 1 + LVL_STEP * S.level;
     return U.clamp((Math.log10(eff) - cur) / LVL_STEP, 0, 1);
+  }
+
+  /** Was zum naechsten Reifegrad fehlt und wie schnell es hereinkommt. */
+  function reifeStand() {
+    const ziel = lifetimeForLevel(S.level + 1);
+    return { wert: reifeWert(), ziel, fehlt: Math.max(0, ziel - reifeWert()),
+      rate: total * m.xpDauer };
   }
   function wpBase(level) {
     let t = 0;
@@ -212,6 +237,7 @@ const E = (() => {
     if (g <= 0) return 0;
     S.biomass += g;
     S.lifetime += g;
+    reifen(g);
     S.runTotal += g;
     if (manual) { S.stats.clicks++; S.idleTime = 0; }
     return g;
@@ -383,6 +409,7 @@ const E = (() => {
     if (def.instant) {
       const g = total * 220 * mult;
       S.biomass += g; S.lifetime += g; S.runTotal += g;
+      reifen(g);
       return { def, mult, instant: g };
     }
     const existing = S.buffs.find(b => b.id === def.id);
@@ -390,6 +417,12 @@ const E = (() => {
     else S.buffs.push({ id: def.id, until: Date.now() + def.dur * 1000, mult });
     recalc();
     return { def, mult };
+  }
+
+  /** Zuschlag aus zeitlich begrenzten Reifungs-Buffs: Er entsteht nur aus
+      dem, was waehrend der Laufzeit tatsaechlich produziert wird. */
+  function reifen(menge) {
+    if (menge > 0 && m.xp > m.xpDauer) S.reifeBonus = (S.reifeBonus || 0) + menge * (m.xp - m.xpDauer);
   }
 
   /* ---------- Haupttakt ---------- */
@@ -401,7 +434,7 @@ const E = (() => {
     if (m.autoClick > 0) {
       clickAcc += m.autoClick * dt;
       const n = Math.floor(clickAcc);
-      if (n > 0) { clickAcc -= n; S.biomass += clickGain * n; S.lifetime += clickGain * n; S.runTotal += clickGain * n; }
+      if (n > 0) { clickAcc -= n; S.biomass += clickGain * n; S.lifetime += clickGain * n; S.runTotal += clickGain * n; reifen(clickGain * n); }
     }
 
     // Produktion
@@ -410,6 +443,7 @@ const E = (() => {
       S.biomass += gain;
       S.lifetime += gain;
       S.runTotal += gain;
+      reifen(gain);
     }
     if (total > S.stats.bestRate) S.stats.bestRate = total;
 
@@ -465,6 +499,7 @@ const E = (() => {
     if (res.gain <= 0) return;
     S.biomass += res.gain;
     S.lifetime += res.gain;
+    reifen(res.gain);
     if (m.offlineSpore) S.runTotal += res.gain;
     S.stats.offlineRuns++;
     S.playTime += res.seconds;
@@ -534,7 +569,7 @@ const E = (() => {
     get m() { return m; }, get prod() { return prod; }, get total() { return total; },
     get clickGain() { return clickGain; }, events,
     recalc, tick, milestoneMult, milestoneProgress, isUnlocked, symLevel,
-    levelProgress, wpTotal, wpSpent, wpAvail, wpBase, lifetimeForLevel,
+    levelProgress, reifeStand, wpTotal, wpSpent, wpAvail, wpBase, lifetimeForLevel,
     growth, unitCost, costFor, maxAffordable, buyAmount, canBuy, buy, doClick,
     nodeState, gateReason, buyNode, respec, mutState, buyMut,
     sporeGain, sporeProgress, canPrestige, doPrestige,

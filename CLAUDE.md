@@ -66,6 +66,11 @@ Richtwerte für einen pausenlos und optimal spielenden Bot:
 - **`+` und `%` in der Bestenliste.** textdb.online dekodiert den Wert zweimal und
   macht dabei aus `+` ein Leerzeichen. `1e+27` wird zu `1e 27`, das JSON ist
   kaputt, und ein einziger solcher Eintrag legt die Liste für alle lahm.
+- **Zeitlich begrenzte Multiplikatoren auf einen aufgelaufenen Gesamtwert.** Der
+  Reifeschub multiplizierte `m.xp` und wirkte damit rueckwirkend auf die gesamte
+  je erzeugte Biomasse: zwei geschenkte Stufen in 120 Sekunden, dauerhaft, danach
+  ein toter Balken. Buff-Anteile gehoeren erarbeitet (`reifen()` -> `S.reifeBonus`),
+  nicht rueckwirkend angewendet.
 - **Reifegrad nach einem Reset.** `levelProgress()` haengt an `S.lifetime`, und
   die bleibt beim Sporenflug stehen, waehrend die Produktion auf null faellt.
   Der Balken steht dann real still — gemessen 1 % nach einer halben Stunde. Wer
@@ -96,7 +101,10 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.4.2 — die Aufbau-Anzeige greift auch fuer Spielstaende, die vor ihrer
+Version 2.5 — der Reifeschub verschenkt keine dauerhaften Reifegrade mehr; sein
+Anteil wird waehrend der Laufzeit erarbeitet. Stufendauer unveraendert.
+
+Davor: Version 2.4.2 — die Aufbau-Anzeige greift auch fuer Spielstaende, die vor ihrer
 Einfuehrung geflogen sind (Bezugswert wird beim Laden nachgetragen).
 
 Davor: Version 2.4.1 — die Aufbauphase nach einem Sporenflug ist sichtbar: Solange die

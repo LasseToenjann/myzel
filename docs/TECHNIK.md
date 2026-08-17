@@ -272,6 +272,31 @@ Stufendauer und 50 % nach 44 % — vorn schneller als hinten, weil er logarithmi
 aufträgt. Die Stufen dauern mittleres Spiel hinweg allerdings 8 bis 16 Stunden;
 1 % davon sind trotzdem Minuten.
 
+### Reifewert statt Biomasse × Reifung
+
+Gerechnet wird der Reifegrad aus `E.reifeWert()`:
+
+```
+S.lifetime * m.xpDauer + S.reifeBonus
+```
+
+`m.xpDauer` ist der Reifungs-Multiplikator **ohne** die zeitlich begrenzten
+Buffs; `recalc()` sichert ihn direkt vor Schritt 8. Der Grund: Ein Buff, der
+`m.xp` mit fünf multipliziert, wirkte sonst rückwirkend auf die gesamte je
+erzeugte Biomasse und schenkte auf einen Schlag rund **1,75 Stufen** — dauerhaft,
+weil der Reifegrad nie sinkt. Danach stand der Balken stundenlang bei null.
+
+Was ein Buff zusätzlich bringt, sammelt `reifen(menge)` stattdessen laufend in
+`S.reifeBonus`, und zwar nur aus dem, was während der Laufzeit wirklich
+produziert wird. Aufgerufen wird es an allen fünf Stellen, an denen Biomasse
+entsteht (Takt, Automatik-Klicks, Klick, goldene Sofort-Spore, Offline).
+
+Spielstände mit bereits verschenkten Stufen füllt `recalc()` einmalig auf, damit
+ihr Reifewert den Reifegrad deckt — sonst behielten sie den toten Balken.
+
+Bleibende Multiplikatoren aus Skills und Mutationen wirken weiterhin rückwirkend;
+das ist gewollt und ändert an der Stufendauer nichts (über 24 Stufen nachgemessen).
+
 **Nach einem Sporenflug bricht die Form.** `softReset()` setzt die Produktion auf
 null, `S.lifetime` bleibt aber stehen. Bis die Produktion wieder in der
 Größenordnung der insgesamt erzeugten Biomasse liefert, kann sich der Balken

@@ -470,6 +470,19 @@ const D = (() => {
 
   function nodeCost(n, lv) { return Math.ceil(n.cb * Math.pow(n.cg, lv)); }
 
+  /** Wie weit ist ein Ast ausgebaut? Fuer die wachsende Einfaerbung. */
+  function branchInfo(key, nodes) {
+    let stufen = 0, moeglich = 0, tiefste = 0;
+    NODES.forEach(n => {
+      if (n.b !== key) return;
+      const lv = (nodes && nodes[n.id]) || 0;
+      stufen += lv;
+      moeglich += n.max;
+      if (lv > 0) tiefste = Math.max(tiefste, nodePos(n).rad);
+    });
+    return { stufen, moeglich, tiefste, anteil: moeglich ? stufen / moeglich : 0 };
+  }
+
   /* ================= MUTATIONEN (Sporen) ================= */
   const M = (id, ic, name, max, cb, cg, d, f, opts) =>
     Object.assign({ id, ic, name, max, cb, cg, d, f }, opts || {});
@@ -692,7 +705,7 @@ const D = (() => {
   BUFFS.forEach(b => BUFF_BY_ID[b.id] = b);
 
   return {
-    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, WEAVES,
+    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, WEAVES,
     SEKTOR,
     MUTATIONS, MUT_BY_ID, mutCost, BIOMES, CHALLENGES, CHAL_BY_ID, ACH, NEWS, BUFFS, BUFF_BY_ID
   };

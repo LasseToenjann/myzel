@@ -1,5 +1,12 @@
 # Änderungsverlauf
 
+## v1.3 – Der Baum wächst sichtbar mit
+
+- Das eingefärbte Segment eines Astes reicht jetzt nur so weit nach außen, **wie dieser Ast ausgebaut ist**. Ein Ast ohne Investition ist bloß ein Ansatz am Kern; mit jedem gekauften Knoten schiebt sich das Segment weiter — das Myzel breitet sich sichtbar in diese Richtung aus. Der Übergang ist animiert.
+- Unter jeder Ast-Beschriftung steht die Zahl der gekauften Stufen, etwa `45 / 124`. Damit ist auf einen Blick zu sehen, wo viel und wo wenig passiert ist.
+- Die Legende hebt beim Überfahren den zugehörigen Ast hervor (vorher wirkungslos, weil eine Opazität über 1 von Browsern auf 1 begrenzt wird).
+
+
 ## v1.2 – Spielstände, Musik, Bestenliste mit Einzelheiten
 
 **Drei Spielstand-Plätze**

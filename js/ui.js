@@ -232,6 +232,7 @@ const UI = (() => {
   const nodeEls = {}, linkEls = {};
   const weaveEls = [];
   const segEls = {};
+  const tagEls = {};
 
   function buildBaum() {
     const p = panel('baum');
@@ -276,6 +277,7 @@ const UI = (() => {
         d: `M0 0 L${x1} ${y1} A${RAUS} ${RAUS} 0 0 1 ${x2} ${y2} Z`,
         fill: 'url(#seg-' + k + ')' });
       seg.dataset.branch = k;
+      seg.style.transformOrigin = '0px 0px';   // waechst vom Kern nach aussen
       g.appendChild(seg);
       segEls[k] = seg;
     });
@@ -295,7 +297,10 @@ const UI = (() => {
       ic.textContent = b.ic; gr.appendChild(ic);
       const t = U.svgEl('text', { class: 'branch-label', y: 8, fill: b.col });
       t.textContent = b.name; gr.appendChild(t);
+      const z = U.svgEl('text', { class: 'branch-count', y: 26, fill: b.col });
+      gr.appendChild(z);
       g.appendChild(gr);
+      tagEls[k] = z;
     }
 
     /* Verbindungen. Geschwungen statt gerade: eine quadratische Kurve mit
@@ -597,6 +602,15 @@ const UI = (() => {
     weaveEls.forEach(w => {
       w.el.classList.toggle('on', (S.nodes[w.a] || 0) > 0 && (S.nodes[w.b] || 0) > 0);
     });
+    /* Jeder Ast waechst nach aussen, so weit er ausgebaut ist. Ein Ast ohne
+       Investition ist nur ein Ansatz am Kern. */
+    for (const k in segEls) {
+      const inf = D.branchInfo(k, S.nodes);
+      const weite = U.clamp((inf.tiefste + 120) / 880, 0.17, 1);
+      const sk = 'scale(' + weite.toFixed(3) + ')';
+      if (segEls[k].style.transform !== sk) segEls[k].style.transform = sk;
+      if (tagEls[k]) setText(tagEls[k], inf.stufen + ' / ' + inf.moeglich);
+    }
     if (selNode) renderNodePanel();     // neue Punkte schalten den Knopf sofort frei
   }
 

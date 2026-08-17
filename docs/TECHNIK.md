@@ -119,6 +119,12 @@ statt als eine lange Kette.
 Hintergrund (radialer Verlauf, nach außen auslaufend). Die Legende hebt beim
 Überfahren den zugehörigen Ast hervor und dimmt die übrigen.
 
+**Wachsende Segmente**: Das Segment eines Astes reicht nur so weit nach außen, wie
+dieser Ast ausgebaut ist (`D.branchInfo()` liefert Stufen, Maximum und den Radius des
+äußersten gekauften Knotens). Umgesetzt als `transform: scale()` mit Ursprung im Kern
+— eine CSS-Übergang animiert das Wachstum, weil sich ein `d`-Attribut nicht animieren
+lässt. Unter der Ast-Beschriftung steht die Zahl der gekauften Stufen.
+
 **Vernetzung**: 21 Querverbindungen (`WEAVES`) zwischen benachbarten Ästen. Sie sind
 auch ungekauft schwach zu sehen — das Netz ist da, es leuchtet nur noch nicht — und
 werden hell, sobald beide Enden gekauft sind.

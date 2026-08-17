@@ -42,8 +42,10 @@ du tust, du gehst immer vorwärts.
 | — | Prüfungen, 59 Erfolge, Autokäufer, Offline-Wachstum | Nebenziele und Komfort |
 
 Der Skillbaum ist als radialer Baum angelegt: Jeder Ast belegt ein eingefärbtes
-Kreissegment, gabelt sich einmal und führt beide Zweige nach außen. Querverbindungen
-zwischen benachbarten Ästen leuchten auf, sobald beide Enden gekauft sind.
+Kreissegment, gabelt sich einmal und führt beide Zweige nach außen. Das Segment
+**wächst mit dem Ausbau** — ein Ast ohne Investition ist nur ein Ansatz am Kern.
+Querverbindungen zwischen benachbarten Ästen leuchten auf, sobald beide Enden
+gekauft sind.
 
 ## Steuerung
 

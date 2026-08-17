@@ -13,6 +13,7 @@ const Save = (() => {
     return {
       v: SAVE_VERSION,
       name: '',
+      pid: '',                            // Kennung in der globalen Rangliste
       biomass: 0,
       lifetime: 0,
       runTotal: 0,

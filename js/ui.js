@@ -230,6 +230,7 @@ const UI = (() => {
   let view = { x: 0, y: 0, z: 1 };
   let dragged = false;
   const nodeEls = {}, linkEls = {};
+  const weaveEls = [];
 
   function buildBaum() {
     const p = panel('baum');
@@ -249,42 +250,70 @@ const UI = (() => {
     const g = U.$('#tree-g');
     R.treeG = g; R.treeWrap = U.$('#treewrap');
 
-    // Ringe als Orientierung
-    for (let r = 1; r <= 11; r++) {
-      g.appendChild(U.svgEl('circle', { class: 'ring-guide', cx: 0, cy: 0, r: 105 + r * 82 }));
+    // Sanfte Hoehenlinien als Orientierung - der Baum waechst nach aussen
+    for (let r = 1; r <= 9; r++) {
+      g.appendChild(U.svgEl('circle', { class: 'ring-guide', cx: 0, cy: 0, r: 120 + r * 82 }));
     }
-    // Ast-Beschriftungen außen
+    // Ast-Beschriftungen ganz aussen, in Richtung des jeweiligen Astes
     for (const k in D.BRANCHES) {
       const b = D.BRANCHES[k];
-      const rad = 105 + 12.1 * 82, a = b.ang * Math.PI / 180;
+      const tip = D.branchTip(k);
+      const a = tip.ang * Math.PI / 180, rad = tip.rad + 95;
       const t = U.svgEl('text', { class: 'branch-label', x: Math.cos(a) * rad, y: Math.sin(a) * rad, fill: b.col });
       t.textContent = b.name;
       g.appendChild(t);
     }
 
-    // Verbindungen
+    /* Verbindungen. Geschwungen statt gerade: eine quadratische Kurve mit
+       Kontrollpunkt zwischen Eltern- und Kindknoten, leicht nach aussen
+       versetzt. Das nimmt dem Baum das Technische. */
+    const kurve = (a, b) => {
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const d = Math.hypot(b.x - a.x, b.y - a.y);
+      const nx = -(b.y - a.y) / d, ny = (b.x - a.x) / d;
+      const bogen = d * 0.13;
+      return `M${a.x} ${a.y} Q${mx + nx * bogen} ${my + ny * bogen} ${b.x} ${b.y}`;
+    };
+
     D.NODES.forEach(n => {
       if (!n.req) return;
       const a = D.nodePos(D.NODE_BY_ID[n.req]), b = D.nodePos(n);
-      const l = U.svgEl('path', { class: 'tlink off', d: `M${a.x} ${a.y} L${b.x} ${b.y}` });
+      const l = U.svgEl('path', { class: 'tlink off', d: kurve(a, b),
+        'stroke-width': Math.max(1.6, 4.4 - n.ring * 0.26) });
       l.style.setProperty('--lc', D.BRANCHES[n.b].col);
       g.appendChild(l);
       linkEls[n.id] = l;
     });
+
+    // Verwebungen zwischen benachbarten Aesten - leuchten erst auf,
+    // wenn beide Enden gekauft sind
+    D.WEAVES.forEach(([x, y], i) => {
+      const na = D.NODE_BY_ID[x], nb = D.NODE_BY_ID[y];
+      if (!na || !nb) return;
+      const a = D.nodePos(na), b = D.nodePos(nb);
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const w = U.svgEl('path', { class: 'tweave',
+        d: `M${a.x} ${a.y} Q${mx * 0.72} ${my * 0.72} ${b.x} ${b.y}` });
+      w.style.setProperty('--wa', D.BRANCHES[na.b].col);
+      g.insertBefore(w, g.firstChild);
+      weaveEls.push({ el: w, a: x, b: y });
+    });
+
     // Kern
     const core = U.svgEl('g', { class: 'tcore' });
-    core.appendChild(U.svgEl('circle', { r: 30, fill: 'rgba(79,224,160,.10)', stroke: 'rgba(79,224,160,.5)', 'stroke-width': 2 }));
-    core.appendChild(U.svgEl('circle', { r: 15, fill: 'rgba(79,224,160,.85)' }));
-    const ct = U.svgEl('text', { class: 'ic', y: 1, 'font-size': 16, fill: '#04140d' });
-    ct.textContent = '❋'; core.appendChild(ct);
-    const cl = U.svgEl('text', { class: 'lvl', y: 50, fill: '#7fa093' });
+    core.appendChild(U.svgEl('circle', { r: 34, fill: 'rgba(79,224,160,.08)', stroke: 'rgba(79,224,160,.35)', 'stroke-width': 1.5 }));
+    core.appendChild(U.svgEl('circle', { r: 22, fill: 'rgba(79,224,160,.14)', stroke: 'rgba(79,224,160,.6)', 'stroke-width': 2 }));
+    core.appendChild(U.svgEl('circle', { r: 13, fill: 'rgba(79,224,160,.9)' }));
+    const ct = U.svgEl('text', { class: 'ic', y: 1, 'font-size': 15, fill: '#04140d' });
+    ct.textContent = '\u274b'; core.appendChild(ct);
+    const cl = U.svgEl('text', { class: 'lvl', y: 52, fill: '#7fa093' });
     cl.textContent = 'URSPRUNG'; core.appendChild(cl);
     g.appendChild(core);
 
-    // Verbindung Kern -> Ring-1-Knoten
+    // Verbindung Kern -> erste Knoten
     D.NODES.filter(n => !n.req).forEach(n => {
       const b = D.nodePos(n);
-      const l = U.svgEl('path', { class: 'tlink on', d: `M0 0 L${b.x} ${b.y}` });
+      const l = U.svgEl('path', { class: 'tlink on', d: kurve({ x: 0, y: 0 }, b), 'stroke-width': 4.4 });
       l.style.setProperty('--lc', D.BRANCHES[n.b].col);
       g.insertBefore(l, g.firstChild);
     });
@@ -292,12 +321,14 @@ const UI = (() => {
     // Knoten
     D.NODES.forEach(n => {
       const pos = D.nodePos(n);
-      const el = U.svgEl('g', { class: 'tnode', transform: `translate(${pos.x},${pos.y})` });
+      const el = U.svgEl('g', { class: 'tnode' + (n.max === 1 ? ' key' : ''), transform: `translate(${pos.x},${pos.y})` });
       el.style.setProperty('--nc', D.BRANCHES[n.b].col);
-      el.appendChild(U.svgEl('circle', { class: 'bg', r: 21 }));
+      const r = n.max === 1 ? 25 : 21;
+      if (n.max === 1) el.appendChild(U.svgEl('circle', { class: 'halo', r: r + 7 }));
+      el.appendChild(U.svgEl('circle', { class: 'bg', r }));
       const t = U.svgEl('text', { class: 'ic' }); t.textContent = n.ic;
       el.appendChild(t);
-      const lv = U.svgEl('text', { class: 'lvl', y: 36 });
+      const lv = U.svgEl('text', { class: 'lvl', y: r + 15 });
       el.appendChild(lv);
       el.addEventListener('click', ev => { ev.stopPropagation(); if (dragged) return; selectNode(n.id); });
       g.appendChild(el);
@@ -434,38 +465,64 @@ const UI = (() => {
     refreshTree();
   }
 
-  function renderNodePanel() {
-    let p = U.$('.node-panel');
-    if (!p) { p = U.el('div', 'node-panel'); R.treeWrap.appendChild(p); }
-    if (!selNode) { p.remove(); return; }
-    const st = E.nodeState(selNode), n = st.n, br = D.BRANCHES[n.b];
-    const nextCost = st.maxed ? null : st.cost;
-    let reqHtml = '';
-    if (st.gated) reqHtml += `<div class="np-req">Benötigt ${n.sym} erschlossene${n.sym === 1 ? 's' : ''} Biom${n.sym === 1 ? '' : 'e'} (Symbiose-Schicht).</div>`;
-    else if (!st.parentOk) reqHtml += `<div class="np-req">Benötigt zuerst: <b>${D.NODE_BY_ID[n.req].name}</b></div>`;
-    else if (!st.maxed && E.wpAvail() < st.cost) reqHtml += `<div class="np-req">Noch ${U.fmtInt(st.cost - E.wpAvail())} Wachstumspunkte nötig.</div>`;
+  let panelSig = '';        // Auswahl + Stufe: nur dabei wird neu gebaut
 
-    p.innerHTML = `
-      <button class="np-close" title="Schließen">×</button>
-      <div class="np-branch" style="color:${br.col}">${br.ic} ${br.name}</div>
-      <h3>${n.ic} ${n.name}</h3>
-      <div class="np-lv">Stufe ${st.lv} / ${n.max}</div>
-      ${st.lv > 0 ? `<div class="np-eff"><div class="k">Aktuell</div><div class="v">${n.d(st.lv)}</div></div>` : ''}
-      ${!st.maxed ? `<div class="np-eff next"><div class="k">Nach dem Kauf</div><div class="v">${n.d(st.lv + 1)}</div></div>` : ''}
-      ${st.maxed ? '<div class="np-cost">Voll ausgebaut.</div>'
-        : `<div class="np-cost">Kosten: <b>${U.fmtInt(nextCost)}</b> Wachstumspunkte<br>
-           <span style="font-size:12px">Verfügbar: ${U.fmtInt(E.wpAvail())}</span></div>`}
-      ${reqHtml}
-      ${st.maxed ? '' : `<button class="btn ${st.canBuy ? 'btn-primary' : ''}" id="np-buy" style="width:100%;margin-top:6px" ${st.canBuy ? '' : 'disabled'}>Ausbauen</button>`}`;
-    p.querySelector('.np-close').onclick = closePanel;
-    const b = p.querySelector('#np-buy');
-    if (b) b.onclick = () => {
-      if (E.buyNode(selNode)) {
-        FX.sfx.node();
-        ripple(selNode);
-        renderNodePanel(); refreshTree(); refreshTop();
-      } else FX.sfx.err();
-    };
+  function renderNodePanel(force) {
+    let p = U.$('.node-panel');
+    if (!selNode) { if (p) p.remove(); panelSig = ''; return; }
+    const st = E.nodeState(selNode), n = st.n, br = D.BRANCHES[n.b];
+    const sig = selNode + ':' + st.lv;
+
+    if (!p || sig !== panelSig || force) {
+      panelSig = sig;
+      if (!p) { p = U.el('div', 'node-panel'); R.treeWrap.appendChild(p); }
+      p.innerHTML = `
+        <button class="np-close" title="Schließen">×</button>
+        <div class="np-branch" style="color:${br.col}">${br.ic} ${br.name}${n.max === 1 ? ' · Schlüsselknoten' : ''}</div>
+        <h3>${n.ic} ${n.name}</h3>
+        <div class="np-lv">Stufe ${st.lv} / ${n.max}</div>
+        ${st.lv > 0 ? `<div class="np-eff"><div class="k">Aktuell</div><div class="v">${n.d(st.lv)}</div></div>` : ''}
+        ${!st.maxed ? `<div class="np-eff next"><div class="k">Nach dem Kauf</div><div class="v">${n.d(st.lv + 1)}</div></div>` : ''}
+        ${st.maxed ? '<div class="np-cost">Voll ausgebaut.</div>'
+          : `<div class="np-cost">Kosten: <b>${U.fmtInt(st.cost)}</b> Wachstumspunkte<br>
+             <span style="font-size:12px">Verfügbar: <span id="np-frei"></span></span></div>`}
+        <div class="np-req" id="np-req"></div>
+        ${st.maxed ? '' : '<button class="btn" id="np-buy" style="width:100%;margin-top:6px">Ausbauen</button>'}`;
+      p.querySelector('.np-close').onclick = closePanel;
+      const b = p.querySelector('#np-buy');
+      if (b) b.onclick = () => {
+        if (E.buyNode(selNode)) {
+          FX.sfx.node();
+          ripple(selNode);
+          renderNodePanel(true); refreshTree(); refreshTop();
+        } else FX.sfx.err();
+      };
+      R.npFrei = p.querySelector('#np-frei');
+      R.npReq = p.querySelector('#np-req');
+      R.npBuy = b;
+    }
+    refreshNodePanel(st, n);
+  }
+
+  /** Nur die Werte, die sich laufend ändern - ohne das Fenster neu zu bauen. */
+  function refreshNodePanel(st, n) {
+    if (!selNode || !R.npReq) return;
+    st = st || E.nodeState(selNode);
+    n = n || st.n;
+    const frei = E.wpAvail();
+    if (R.npFrei) setText(R.npFrei, U.fmtInt(frei));
+
+    let hinweis = '';
+    if (st.gated) hinweis = st.grund;
+    else if (!st.parentOk) hinweis = `Zuerst nötig: <b>${D.NODE_BY_ID[n.req].name}</b>`;
+    else if (!st.maxed && frei < st.cost) hinweis = `Noch ${U.fmtInt(st.cost - frei)} Wachstumspunkte nötig.`;
+    setHTML(R.npReq, hinweis);
+    R.npReq.classList.toggle('hidden', !hinweis);
+
+    if (R.npBuy) {
+      R.npBuy.disabled = !st.canBuy;
+      R.npBuy.classList.toggle('btn-primary', st.canBuy);
+    }
   }
 
   function ripple(id) {
@@ -493,6 +550,10 @@ const UI = (() => {
       const link = linkEls[id];
       if (link) { link.classList.toggle('on', st.lv > 0); link.classList.toggle('off', st.lv === 0); }
     }
+    weaveEls.forEach(w => {
+      w.el.classList.toggle('on', (S.nodes[w.a] || 0) > 0 && (S.nodes[w.b] || 0) > 0);
+    });
+    if (selNode) renderNodePanel();     // neue Punkte schalten den Knopf sofort frei
   }
 
   /* ================= REITER: SPOREN ================= */
@@ -794,22 +855,29 @@ const UI = (() => {
       <div class="opt-row name-row">
         <div style="min-width:170px">
           <div class="ol">Name deines Myzels</div>
-          <div class="od">Nur für die Bestenliste. Wird ausschließlich gesendet, wenn du dort
-            auf „Ergebnis senden" klickst.</div>
+          <div class="od">So stehst du in der weltweiten Bestenliste. Gesendet wird
+            ausschließlich, wenn du dort auf „Ergebnis senden" klickst.</div>
         </div>
         <input type="text" id="opt-name" maxlength="22" placeholder="z. B. Waldgeflecht">
         <button class="btn sm" id="opt-lb">Bestenliste öffnen</button>
       </div>
       <h2 class="sec" style="margin-top:26px">Spielstand</h2>
-      <p class="hint">Der Spielstand liegt im Browser dieses Geräts. Sichere ihn als Text, wenn du ihn behalten willst.</p>
-      <div class="opt-row" style="gap:10px">
-        <button class="btn sm" id="sv-exp">In Textfeld exportieren</button>
-        <button class="btn sm" id="sv-copy">In Zwischenablage</button>
-        <button class="btn sm" id="sv-file">Als Datei speichern</button>
-        <button class="btn sm" id="sv-imp">Aus Textfeld laden</button>
-        <button class="btn sm" id="sv-save">Jetzt speichern</button>
+      <div class="save-note">
+        <div class="sn-ico">✓</div>
+        <div>
+          <div class="ol">Wird automatisch gespeichert</div>
+          <div class="od">Alle paar Sekunden und immer, wenn du den Reiter schließt.
+            Du musst nichts weiter tun. <span id="sv-when"></span></div>
+        </div>
       </div>
-      <textarea class="save-area" id="sv-area" placeholder="Spielstand hier einfügen und auf „Aus Textfeld laden" klicken"></textarea>
+      <div class="opt-row">
+        <div><div class="ol">Sicherung</div>
+          <div class="od">Für den Umzug auf ein anderes Gerät oder als Reservekopie.</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm" id="sv-file">Sicherung speichern</button>
+          <button class="btn sm" id="sv-load">Sicherung laden</button>
+        </div>
+      </div>
       <div class="opt-row" style="margin-top:16px;border-color:rgba(239,107,107,.3)">
         <div><div class="ol">Neu beginnen</div>
           <div class="od">Löscht diesen Spielstand vollständig und startet ein neues Myzel.
@@ -855,26 +923,15 @@ const UI = (() => {
     nameIn.onchange = saveName; nameIn.onblur = saveName;
     U.$('#opt-lb').onclick = () => Game.showLeaderboard();
 
-    U.$('#sv-exp').onclick = () => { U.$('#sv-area').value = Save.exportStr(); };
-    U.$('#sv-copy').onclick = async () => {
-      try { await navigator.clipboard.writeText(Save.exportStr()); FX.toast('Kopiert', 'Spielstand liegt in der Zwischenablage.', 'lime'); }
-      catch (e) { U.$('#sv-area').value = Save.exportStr(); FX.toast('Bitte manuell kopieren', 'Der Spielstand steht im Textfeld.', ''); }
-    };
     U.$('#sv-file').onclick = () => {
+      Save.write();
       const blob = new Blob([Save.exportStr()], { type: 'text/plain' });
       const a = U.el('a'); a.href = URL.createObjectURL(blob);
       a.download = 'myzel-spielstand-' + new Date().toISOString().slice(0, 10) + '.txt';
       a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      FX.toast('Sicherung gespeichert', 'Die Datei liegt in deinen Downloads.', 'lime');
     };
-    U.$('#sv-imp').onclick = () => {
-      const v = U.$('#sv-area').value.trim();
-      if (!v) return FX.toast('Nichts zu laden', 'Füge zuerst einen Spielstand ein.', '');
-      Game.confirm('Spielstand laden?', 'Dein aktueller Fortschritt wird ersetzt.', () => {
-        if (Save.importStr(v)) { FX.toast('Geladen', 'Willkommen zurück.', 'lime'); Game.afterLoad(); }
-        else FX.toast('Fehlerhafter Spielstand', 'Der Text konnte nicht gelesen werden.', '');
-      });
-    };
-    U.$('#sv-save').onclick = () => { Save.write(); FX.toast('Gespeichert', '', 'lime'); };
+    U.$('#sv-load').onclick = () => Game.ladeSicherung();
     U.$('#sv-reset').onclick = () => {
       Game.confirm('Wirklich alles zurücksetzen?', 'Reifegrad, Skillbaum, Sporen und Biome sind dann weg. Das lässt sich nicht rückgängig machen.', () => {
         Save.wipe(); location.reload();
@@ -883,7 +940,15 @@ const UI = (() => {
     U.$('#keys').innerHTML = `
       <b>1 – 8</b> Struktur kaufen &nbsp;·&nbsp; <b>M</b> alle kaufbaren Strukturen kaufen &nbsp;·&nbsp;
       <b>Leertaste</b> nähren (klicken) &nbsp;·&nbsp; <b>Q W E R T Z</b> Reiter wechseln &nbsp;·&nbsp;
-      <b>P</b> Sporenflug &nbsp;·&nbsp; <b>S</b> speichern`;
+      <b>P</b> Sporenflug &nbsp;·&nbsp; <b>Y</b> Symbiose &nbsp;·&nbsp; <b>S</b> speichern`;
+  }
+
+  function refreshOpt() {
+    if (!built.optionen) return;
+    const e = U.$('#sv-when');
+    if (!e || !S.lastSave) return;
+    const sek = Math.max(0, (Date.now() - S.lastSave) / 1000);
+    setText(e, sek < 3 ? 'Gerade eben gespeichert.' : 'Zuletzt vor ' + U.fmtTimeShort(sek) + ' gespeichert.');
   }
 
   /* ================= Kopfzeile ================= */
@@ -930,7 +995,8 @@ const UI = (() => {
   /* ================= Takt ================= */
   function refreshTab(force) {
     ({ netz: refreshNetz, baum: refreshTree, sporen: refreshSporen, symbiose: refreshSym,
-       pruefung: refreshPruef, erfolge: refreshErfolge, statistik: refreshStat }[active] || (() => {}))();
+       pruefung: refreshPruef, erfolge: refreshErfolge, statistik: refreshStat,
+       optionen: refreshOpt }[active] || (() => {}))();
   }
   function refreshAll() {
     refreshTop(); refreshTabs(); refreshTab(true);

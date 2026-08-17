@@ -243,14 +243,32 @@ const E = (() => {
   }
 
   /* ---------- Skillbaum ---------- */
+  /** Warum ist der Knoten noch gesperrt? Leerer Text = frei. */
+  function gateReason(n) {
+    if (n.sym !== undefined && symLevel() < n.sym) {
+      return `Erst mit ${n.sym} erschlossenen Biom${n.sym === 1 ? '' : 'en'} aus der Symbiose-Schicht.`;
+    }
+    const g = n.gate;
+    if (!g) return '';
+    if (g.struct !== undefined && !isUnlocked(g.struct)) {
+      return `Erst wenn du ${D.STRUCTS[g.struct].name} freigeschaltet hast — vorher bringt der Knoten nichts.`;
+    }
+    if (g.spore && S.prestiges === 0 && S.sporeLife === 0) {
+      return 'Erst nach deinem ersten Sporenflug — vorher gibt es nichts zu verstärken.';
+    }
+    return '';
+  }
+
   function nodeState(id) {
     const n = D.NODE_BY_ID[id];
     const lv = S.nodes[id] || 0;
-    const gated = n.sym !== undefined && symLevel() < n.sym;
+    const grund = gateReason(n);
+    const gated = !!grund;
     const parentOk = !n.req || (S.nodes[n.req] || 0) > 0;
     const maxed = lv >= n.max;
     const cost = maxed ? Infinity : D.nodeCost(n, lv);
-    return { n, lv, gated, parentOk, maxed, cost, canBuy: !gated && parentOk && !maxed && wpAvail() >= cost };
+    return { n, lv, gated, grund, parentOk, maxed, cost,
+      canBuy: !gated && parentOk && !maxed && wpAvail() >= cost };
   }
   function buyNode(id) {
     const st = nodeState(id);
@@ -552,7 +570,7 @@ const E = (() => {
     recalc, tick, milestoneMult, milestoneProgress, isUnlocked, symLevel,
     levelProgress, wpTotal, wpSpent, wpAvail, wpBase, lifetimeForLevel,
     growth, unitCost, costFor, maxAffordable, buyAmount, canBuy, buy, doClick,
-    nodeState, buyNode, respec, mutState, buyMut,
+    nodeState, gateReason, buyNode, respec, mutState, buyMut,
     sporeGain, sporeProgress, canPrestige, doPrestige,
     symUnlocked, spGain, canSym, doSym, buyBiome,
     challUnlocked, enterChall, leaveChall, challGoal,

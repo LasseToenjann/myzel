@@ -166,19 +166,48 @@ const Game = (() => {
       () => { E.enterChall(id); FX.sfx.unlock(); UI.show('netz'); UI.refreshAll(); }, 'Antreten');
   }
 
+  /** Sicherung einspielen - als Datei oder als Text. */
+  function ladeSicherung() {
+    modal(`<h3>Sicherung laden</h3>
+      <p>Wähle eine gespeicherte Datei oder füge den Text ein. Dein aktueller
+      Fortschritt wird dabei <b>ersetzt</b>.</p>
+      <input type="file" id="ld-file" accept=".txt,text/plain" style="margin-bottom:12px">
+      <textarea class="save-area" id="ld-text" style="max-width:none" placeholder="… oder Spielstand hier einfügen"></textarea>
+      <div class="mrow"><button class="btn ghost" id="ld-no">Abbrechen</button>
+      <button class="btn btn-primary" id="ld-ok">Laden</button></div>`, m => {
+      const uebernehmen = txt => {
+        if (!txt || !txt.trim()) return FX.toast('Nichts zu laden', 'Wähle eine Datei oder füge den Text ein.', '');
+        if (Save.importStr(txt.trim())) { close(); FX.toast('Geladen', 'Willkommen zurück.', 'lime'); afterLoad(); }
+        else FX.toast('Fehlerhafte Sicherung', 'Der Inhalt konnte nicht gelesen werden.', '');
+      };
+      U.$('#ld-file', m).onchange = e => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => U.$('#ld-text', m).value = String(r.result);
+        r.readAsText(f);
+      };
+      U.$('#ld-no', m).onclick = close;
+      U.$('#ld-ok', m).onclick = () => uebernehmen(U.$('#ld-text', m).value);
+    });
+  }
+
   /* ================= Bestenliste ================= */
   async function showLeaderboard(fromStart) {
     modal(`<h3>Bestenliste</h3><p>Wird geladen …</p>`);
-    const list = await LB.fetchList();
-    const meName = (S && S.name) || '';
-    const rows = list.slice(0, 25).map((e, i) => `
-      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.n === meName && meName ? 'me' : ''}">
-        <span class="r">${i + 1}</span><span class="n">${escapeHtml(e.n)}</span>
-        <span class="lv">${U.fmt(e.bio)} Biomasse</span><span class="s">Reifegrad ${e.lv}</span></div>`).join('');
+    const { list, online } = await LB.fetchList();
+    const mineId = (S && S.pid) || '';
+    const zeilen = list.slice(0, 25).map((e, i) => `
+      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === mineId ? 'me' : ''}">
+        <span class="r">${i + 1}</span><span class="n">${escapeHtml(e.name)}</span>
+        <span class="lv">${U.fmt(e.bio)} Biomasse${e.sp > 0 ? ' · ' + U.fmtInt(e.sp) + ' SP' : ''}</span>
+        <span class="s">Reifegrad ${e.level}</span></div>`).join('');
     modal(`<h3>Bestenliste</h3>
-      <p>${LB.isRemote() ? 'Weltweite Rangliste.' : 'Diese Liste liegt nur auf diesem Gerät. Sie lässt sich in <code>js/leaderboard.js</code> auf einen gemeinsamen Server umstellen.'}</p>
-      <div class="lb-list">${rows || '<p style="opacity:.6">Noch keine Einträge.</p>'}</div>
-      ${fromStart || !S ? '' : `<input type="text" id="lb-name" maxlength="22" placeholder="Name deines Myzels" value="${escapeHtml(meName)}">`}
+      <p>${online
+        ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse.'
+        : 'Die Rangliste ist gerade nicht erreichbar — hier steht der zuletzt geladene Stand.'}</p>
+      <div class="lb-list">${zeilen || '<p style="opacity:.6">Noch keine Einträge. Sei der erste.</p>'}</div>
+      ${fromStart || !S ? '' : `<input type="text" id="lb-name" maxlength="22" placeholder="Name deines Myzels" value="${escapeHtml(S.name || '')}">`}
       <div class="mrow">
         <button class="btn ghost" id="lb-close">Schließen</button>
         ${fromStart || !S ? '' : '<button class="btn btn-primary" id="lb-send">Ergebnis senden</button>'}
@@ -187,13 +216,15 @@ const Game = (() => {
       const b = U.$('#lb-send', m);
       if (b) b.onclick = async () => {
         const n = U.$('#lb-name', m).value.trim();
-        if (!n) return FX.toast('Name fehlt', 'Trag einen Namen ein.', '');
+        if (!n) return FX.toast('Name fehlt', 'Trag einen Namen ein, unter dem du in der Liste stehst.', '');
         S.name = n.slice(0, 22);
         b.disabled = true; b.textContent = 'Sende …';
         const r = await LB.submit();
+        Save.write();
         close();
-        FX.toast(r.ok ? 'Eingetragen' : 'Nur lokal gespeichert',
-          `Reifegrad ${S.level} · ${U.fmt(S.lifetime)} Biomasse`, r.ok ? 'lime' : '');
+        if (r.ok && r.inListe) FX.toast('Eingetragen', `Reifegrad ${S.level} · ${U.fmt(S.lifetime)} Biomasse`, 'lime');
+        else if (r.ok) FX.toast('Noch nicht in den besten ' + LB.MAX, 'Wachse weiter und sende erneut.', '');
+        else FX.toast('Rangliste nicht erreichbar', 'Versuch es später noch einmal.', '');
       };
     });
   }
@@ -268,6 +299,7 @@ const Game = (() => {
       else if (k === 'm') { let any = 0; for (let i = 7; i >= 0; i--) any += E.buy(i); if (any) { FX.sfx.buy(); UI.refreshTab(); } }
       else if (k === ' ') { ev.preventDefault(); const g = E.doClick(true); FX.pop(FX.W / 2, FX.H / 2, '+' + U.fmt(g)); FX.sfx.click(); }
       else if (k === 'p') prestige();
+      else if (k === 'y') symbiose();
       else if (k === 's') { Save.write(); FX.toast('Gespeichert', '', 'lime', 1600); }
       else if (tabKeys[k]) UI.show(tabKeys[k]);
       else if (k === 'escape') close();
@@ -285,7 +317,7 @@ const Game = (() => {
     document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });
   }
 
-  return { boot, enter, afterLoad, prestige, symbiose, enterChall, showLeaderboard, confirm: confirmBox, modal, close };
+  return { boot, enter, afterLoad, prestige, symbiose, enterChall, showLeaderboard, ladeSicherung, confirm: confirmBox, modal, close };
 })();
 
 window.addEventListener('DOMContentLoaded', Game.boot);

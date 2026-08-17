@@ -1,0 +1,15 @@
+# MYZEL — Das stille Netz
+#
+# Hinweis: Diese Datei liegt im Projektpfad /myzel/ und ist dort folgenlos.
+# Suchmaschinen lesen robots.txt ausschliesslich im Wurzelverzeichnis einer
+# Domain. Sie wirkt erst unter einer eigenen Domain oder wenn der Inhalt ins
+# Wurzel-Repository kopiert wird. Sie steht hier, damit die Absicht
+# dokumentiert ist.
+#
+# css/ und js/ sind bewusst NICHT gesperrt: Google rendert die Seite zum
+# Indexieren und braucht dafuer beide.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://lassetoenjann.github.io/myzel/sitemap.xml

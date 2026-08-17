@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Genau eine URL: Alle Bildschirme des Spiels sind Abschnitte in
+     index.html. Es gibt keine Routen, Parameter oder Unterseiten. -->
+<urlset xmlns="http://www.w3.org/1999/sitemaps/schema/0.9">
+  <url>
+    <loc>https://lassetoenjann.github.io/myzel/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

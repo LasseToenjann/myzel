@@ -273,6 +273,92 @@ const D = (() => {
       (m) => { m.global *= 10; }, { sym: 3 })
   ];
 
+  const NODE_BY_ID = {};
+  NODES.forEach(n => NODE_BY_ID[n.id] = n);
+
+  /* ---------- Struktur des Baums ----------
+     Jeder Ast gabelt sich einmal und führt beide Zweige nach außen weiter.
+     Ohne Gabelung wäre jeder Ast eine gerade Linie - sechs Speichen statt
+     eines Geflechts. Wer hier etwas ändert, ändert nur das Aussehen und die
+     Reihenfolge der Freischaltung, nicht die Wirkung der Knoten.
+
+     Format: Knoten -> Elternknoten. Was hier fehlt, hängt am vorherigen
+     Knoten desselben Astes. */
+  const PARENT = {
+    // Wachstum: ab dem Nährstoffdruck laufen zwei Zweige nach außen
+    w_knoten: 'w_druck', w_frucht: 'w_druck',
+    w_boden: 'w_knoten', w_lager: 'w_frucht',
+    w_leben: 'w_boden', w_wurzel: 'w_lager',
+    w_myk: 'w_leben', w_welt: 'w_myk', w_ewig: 'w_welt',
+
+    // Effizienz: links der Massenkauf, rechts die Kostensenkung
+    e_bulk10: 'e_kompakt', e_leicht: 'e_kompakt',
+    e_bulkmax: 'e_bulk10', e_kompakt2: 'e_leicht',
+    e_start: 'e_bulkmax', e_klar: 'e_kompakt2',
+    e_perf: 'e_start', e_recyc: 'e_klar',
+    e_dicht: 'e_recyc', e_null: 'e_dicht',
+
+    // Symbiose: Sporennetz und Struktur-Resonanz teilen sich auf
+    s_netz: 's_reife', s_res: 's_reife',
+    s_viel: 's_netz', s_paar: 's_res',
+    s_gemein: 's_viel', s_pilz: 's_paar',
+    s_wald: 's_gemein', s_all: 's_pilz', s_ewig: 's_all',
+
+    // Zersetzung: Kompost und Totholz als zwei Wege in die Nacht
+    z_kompost: 'z_traeg', z_totholz: 'z_traeg',
+    z_nacht: 'z_kompost', z_tief: 'z_totholz',
+    z_moder: 'z_nacht', z_ewignacht: 'z_tief',
+    z_humus: 'z_moder', z_erde: 'z_humus',
+
+    // Automatik: zwei parallele Linien, damit die acht Autokäufer nicht
+    // als eine lange Kette hintereinander stehen
+    a_s0: 'a_click', a_s1: 'a_click',
+    a_s2: 'a_s0', a_s3: 'a_s1',
+    a_s4: 'a_s2', a_s5: 'a_s3',
+    a_s6: 'a_s4', a_s7: 'a_s5',
+    a_gold: 'a_s6', a_pres: 'a_s7', a_takt: 'a_gold',
+
+    // Tiefe: Prüfungen und Genomkarte als Gabelung
+    t_pruef: 't_wurzel', t_genom: 't_wurzel',
+    t_erinner: 't_pruef', t_welt: 't_genom',
+    t_xp: 't_erinner', t_sym: 't_welt',
+    t_wp: 't_xp', t_sporen2: 't_sym',
+    t_wurzel2: 't_sporen2', t_kern: 't_wurzel2'
+  };
+
+  /* Ring und Platz der Automatik: zwei Reihen nebeneinander. */
+  const LAYOUT = {
+    a_click: [1, 0],
+    a_s0: [2, -1], a_s1: [2, 1], a_s2: [3, -1], a_s3: [3, 1],
+    a_s4: [4, -1], a_s5: [4, 1], a_s6: [5, -1], a_s7: [5, 1],
+    a_gold: [6, -1], a_pres: [6, 1], a_takt: [7, 0]
+  };
+
+  (function linkNodes() {
+    const byBranch = {};
+    NODES.forEach(n => (byBranch[n.b] = byBranch[n.b] || []).push(n));
+    for (const b in byBranch) {
+      byBranch[b].forEach((n, i) => {
+        if (PARENT[n.id] !== undefined) n.req = PARENT[n.id];
+        else if (n.req === undefined) n.req = i === 0 ? null : byBranch[b][i - 1].id;
+      });
+    }
+    for (const id in LAYOUT) {
+      const n = NODE_BY_ID[id];
+      if (n) { n.ring = LAYOUT[id][0]; n.slot = LAYOUT[id][1]; }
+    }
+    // Sicherheitsnetz: kein Knoten darf sich im Kreis auf sich selbst beziehen
+    NODES.forEach(n => {
+      const gesehen = {};
+      let cur = n;
+      while (cur && cur.req) {
+        if (gesehen[cur.id]) { console.warn('Kreis im Skillbaum bei', n.id); n.req = null; break; }
+        gesehen[cur.id] = 1;
+        cur = NODE_BY_ID[cur.req];
+      }
+    });
+  })();
+
   /* Kosten systematisch: der Ring bestimmt den Grundpreis, die letzte Stufe
      kostet immer rund das 3,2-fache der ersten. */
   const RING_BASE = [0, 1, 1, 1, 1, 2, 2, 2, 3, 4, 5, 6];
@@ -282,28 +368,100 @@ const D = (() => {
     n.cg = n.max === 1 ? 1 : 1 + 1.2 / n.max;
   });
 
-  // Index + automatische Eltern-Verknüpfung (Kette je Ast, sofern kein req gesetzt)
-  const NODE_BY_ID = {};
-  NODES.forEach(n => NODE_BY_ID[n.id] = n);
-  (function linkNodes() {
-    const byBranch = {};
-    NODES.forEach(n => (byBranch[n.b] = byBranch[n.b] || []).push(n));
-    for (const b in byBranch) {
-      const list = byBranch[b];
-      list.forEach((n, i) => {
-        if (n.req === undefined) n.req = i === 0 ? null : list[i - 1].id;
+
+  /* ---------- Anordnung ----------
+     Radiales Baumlayout: Jeder Ast belegt einen festen Kreisausschnitt.
+     Innerhalb davon teilen Geschwister den Ausschnitt untereinander auf,
+     und zwar im Verhaeltnis dazu, wie viele Knoten an ihnen haengen.
+     So ueberlappt nichts, und eine Gabelung bleibt bis nach aussen sichtbar.
+
+     Frueher hing der Winkel nur an Ast und Platz, und die Streuung sank
+     nach aussen - dadurch liefen alle Aeste zu geraden Speichen zusammen. */
+  const SEKTOR = 48;          // Grad je Ast (von 60 verfuegbaren - Rest ist Luft)
+  const R0 = 118;             // Abstand des ersten Rings vom Kern
+  const DR = 86;              // Abstand zwischen zwei Ebenen
+
+  const CHILDREN = {};
+  NODES.forEach(n => { const k = n.req || '_wurzel'; (CHILDREN[k] = CHILDREN[k] || []).push(n); });
+
+  /** Wie viele Endpunkte haengen an diesem Knoten? Bestimmt seine Breite. */
+  const blattCache = {};
+  function blaetter(n) {
+    if (blattCache[n.id] !== undefined) return blattCache[n.id];
+    const k = CHILDREN[n.id];
+    return (blattCache[n.id] = k ? k.reduce((a, x) => a + blaetter(x), 0) : 1);
+  }
+
+  /** Kleine, immer gleiche Unregelmaessigkeit - damit es gewachsen wirkt. */
+  function jitter(id) {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+    return ((h % 1000) + 1000) % 1000 / 1000;
+  }
+
+  const posCache = {};
+  (function anordnen() {
+    function platziere(n, mitte, breite, tiefe) {
+      const j = jitter(n.id);
+      const rad = R0 + tiefe * DR + (j - 0.5) * 14;
+      const a = mitte * Math.PI / 180;
+      posCache[n.id] = { x: Math.cos(a) * rad, y: Math.sin(a) * rad, ang: mitte, rad, tiefe };
+      const kinder = CHILDREN[n.id];
+      if (!kinder) return;
+      const gesamt = kinder.reduce((a2, k) => a2 + blaetter(k), 0);
+      let lauf = mitte - breite / 2;
+      kinder.forEach(k => {
+        const anteil = breite * (blaetter(k) / gesamt);
+        platziere(k, lauf + anteil / 2, anteil * 0.92, tiefe + 1);
+        lauf += anteil;
       });
     }
+    (CHILDREN['_wurzel'] || []).forEach(n => {
+      platziere(n, BRANCHES[n.b].ang, SEKTOR, 0);
+    });
   })();
 
-  /** Position eines Knotens im Baum-Koordinatensystem. */
-  function nodePos(n) {
-    const br = BRANCHES[n.b];
-    const r = 105 + n.ring * 82;
-    const spread = 30 - n.ring * 1.6;
-    const a = (br.ang + n.slot * spread) * Math.PI / 180;
-    return { x: Math.cos(a) * r, y: Math.sin(a) * r };
+  function nodePos(n) { return posCache[n.id] || { x: 0, y: 0, ang: 0, rad: 0, tiefe: 0 }; }
+
+  /** Aussenrand eines Astes - fuer die Beschriftung. */
+  function branchTip(key) {
+    let best = null;
+    NODES.forEach(n => {
+      if (n.b !== key) return;
+      const p2 = nodePos(n);
+      if (!best || p2.rad > best.rad) best = p2;
+    });
+    return { ang: BRANCHES[key].ang, rad: best ? best.rad : 400 };
   }
+
+  /* ---------- Freischalt-Bedingungen ----------
+     Ein Knoten soll erst kaufbar sein, wenn er auch wirkt. Ohne das ließe
+     sich zum Beispiel der Sporen-Gewinn ausbauen, bevor der erste
+     Sporenflug überhaupt möglich ist - ein Punkt, der ins Leere geht.
+
+       struct: i  -> Struktur i muss freigeschaltet sein
+       spore: true -> mindestens ein Sporenflug absolviert
+       sym: n     -> n erschlossene Biome (steht am Knoten selbst)          */
+  const GATE = {
+    w_ver: { struct: 1 }, w_knoten: { struct: 2 }, w_frucht: { struct: 3 },
+    w_lager: { struct: 4 }, w_wurzel: { struct: 5 }, w_myk: { struct: 6 },
+    w_welt: { struct: 7 },
+    a_s1: { struct: 1 }, a_s2: { struct: 2 }, a_s3: { struct: 3 },
+    a_s4: { struct: 4 }, a_s5: { struct: 5 }, a_s6: { struct: 6 }, a_s7: { struct: 7 },
+    t_sporen: { spore: true }, t_wurzel: { spore: true }, t_genom: { spore: true },
+    t_erinner: { spore: true }, z_nacht: { spore: true }, s_netz: { spore: true },
+    e_start: { spore: true }, z_totholz: { spore: true }
+  };
+  NODES.forEach(n => { if (GATE[n.id]) n.gate = GATE[n.id]; });
+
+  /* Verwebungen: rein sichtbare Querverbindungen zwischen benachbarten
+     Aesten. Sie leuchten erst auf, wenn beide Enden gekauft sind - das
+     Netz schliesst sich also sichtbar mit dem Fortschritt. */
+  const WEAVES = [
+    ['w_druck', 'e_kompakt'], ['e_klar', 's_reife'], ['s_gemein', 't_erinner'],
+    ['t_xp', 'a_s4'], ['a_gold', 'z_moder'], ['z_traeg', 'w_boden'],
+    ['w_leben', 'e_start'], ['s_viel', 't_genom'], ['z_kompost', 'a_click']
+  ];
 
   function nodeCost(n, lv) { return Math.ceil(n.cb * Math.pow(n.cg, lv)); }
 
@@ -529,7 +687,7 @@ const D = (() => {
   BUFFS.forEach(b => BUFF_BY_ID[b.id] = b);
 
   return {
-    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost,
+    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, WEAVES,
     MUTATIONS, MUT_BY_ID, mutCost, BIOMES, CHALLENGES, CHAL_BY_ID, ACH, NEWS, BUFFS, BUFF_BY_ID
   };
 })();

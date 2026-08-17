@@ -5,22 +5,29 @@ Du zersetzt, wächst, verzweigst dich — und irgendwann durchziehst du ganze Bi
 
 **Spielen:** https://lassetoenjann.github.io/myzel/
 
-Läuft komplett im Browser, ohne Konto, ohne Server. Der Spielstand liegt lokal
-im Browser und lässt sich als Text exportieren.
+Läuft komplett im Browser, ohne Konto und ohne Installation. Der Spielstand liegt
+lokal im Browser und lässt sich als Text sichern. Nur die Bestenliste geht ins Netz
+— und auch die erst, wenn man dort auf „Ergebnis senden" klickt.
 
 ---
 
-## Die Idee
+## Wo steht was
 
-Ein Skilltree ist eigentlich schon ein Netzwerk — also liegt es nahe, ein Spiel
-zu bauen, in dem das Netzwerk auch die Erzählung ist. Prestige heißt hier
-*Sporenflug*, Offline-Wachstum ist einfach die Nacht, und der Skilltree ist das
-Myzel selbst.
+| Ich möchte … | … dann hier |
+|---|---|
+| **spielen** | [lassetoenjann.github.io/myzel](https://lassetoenjann.github.io/myzel/) |
+| **die Regeln verstehen** | [docs/SPIELANLEITUNG.md](docs/SPIELANLEITUNG.md) |
+| **wissen, warum es so gebaut ist** | [KONZEPT.md](KONZEPT.md) |
+| **am Code arbeiten** | [CLAUDE.md](CLAUDE.md) für Arbeitsweise und Stand · [docs/TECHNIK.md](docs/TECHNIK.md) für den Aufbau |
+| **sehen, was sich geändert hat** | [docs/AENDERUNGEN.md](docs/AENDERUNGEN.md) |
 
-Die wichtigste Design-Entscheidung: **Der Skillbaum wird nie zurückgesetzt.**
-Seine Punkte kommen aus dem *Reifegrad*, der auf der insgesamt jemals erzeugten
-Biomasse beruht. Egal was du tust — du gehst immer vorwärts. Kein Verlust, keine
-Zeitfenster, kein Druck.
+## Die Idee in drei Sätzen
+
+Ein Skilltree ist bereits ein Netzwerk — also liegt es nahe, ein Spiel zu bauen, in
+dem das Netzwerk auch die Erzählung ist. Prestige heißt hier *Sporenflug*,
+Offline-Wachstum ist einfach die Nacht, und der Skillbaum ist das Myzel selbst.
+Die wichtigste Entscheidung: **Der Skillbaum wird nie zurückgesetzt** — egal was
+du tust, du gehst immer vorwärts.
 
 ## Die Schichten
 
@@ -34,26 +41,6 @@ Zeitfenster, kein Druck.
 | 5 | **Symbiose** (Meta-Prestige) → 8 Biome | öffnet gesperrte Ringe im Baum |
 | — | Prüfungen, 59 Erfolge, Autokäufer, Offline-Wachstum | Nebenziele und Komfort |
 
-### Die sechs Äste
-
-**Wachstum** (Produktion) · **Effizienz** (Kosten) · **Symbiose** (Synergien) ·
-**Zersetzung** (Offline und Ruhe) · **Automatik** (Autokäufer) · **Tiefe** (Meta)
-
-Die äußeren Ringe sind gesperrt, bis du in der Symbiose-Schicht Biome erschließt.
-
-## Genre-Zutaten, die drin sind
-
-- Goldene Sporen: driften über den Bildschirm, geben zeitlich begrenzte Boosts
-- Offline-Wachstum mit anpassbarer Kappe und Effizienz
-- Autokäufer je Struktur, Auto-Klick, automatischer Sporenflug
-- Kaufmengen ×1 / ×10 / ×100 / MAX
-- Meilensteine: jede 25. Struktur verdoppelt ihre Produktion
-- Immer sichtbares nächstes Ziel — man weiß nie „was mache ich jetzt?"
-- Herausforderungen mit Handicap und dauerhafter Belohnung
-- Erfolge mit echtem Bonus (+2 % Produktion je Stück)
-- Tastenkürzel, Statistik, Zahlenformat umstellbar, Export/Import
-- Waldmeldungen als Flavour-Ticker
-
 ## Steuerung
 
 | Taste | Wirkung |
@@ -63,12 +50,17 @@ Die äußeren Ringe sind gesperrt, bis du in der Symbiose-Schicht Biome erschlie
 | `Leertaste` | nähren (klicken) |
 | `Q W E R T Z` | Reiter wechseln |
 | `P` | Sporenflug |
+| `Y` | Symbiose |
 | `S` | speichern |
+
+Auf Tablet und Handy: ziehen zum Verschieben, zwei Finger zum Zoomen,
+Doppeltipp setzt die Baumansicht zurück.
 
 ## Aufbau
 
 ```
 index.html          Grundgerüst und Bildschirme
+assets/             Favicon
 css/style.css       gesamtes Aussehen
 js/util.js          Zahlformatierung, DOM-Helfer
 js/data.js          alle Inhalte: Strukturen, Skillbaum, Mutationen, Biome, Erfolge
@@ -76,7 +68,7 @@ js/state.js         Spielstand: anlegen, speichern, laden, migrieren
 js/engine.js        Spiellogik: Werte berechnen, Ticken, Kaufen, Prestige
 js/fx.js            wachsendes Hintergrund-Myzel, Partikel, Toasts, Ton
 js/ui.js            alle Reiter und der Skillbaum
-js/leaderboard.js   Bestenliste (lokal, optional gemeinsam)
+js/leaderboard.js   globale Bestenliste über textdb.online
 js/main.js          Startbildschirm, Spielschleife, Tasten
 ```
 
@@ -84,29 +76,14 @@ Kein Build, keine Abhängigkeiten. `index.html` öffnen genügt.
 
 ## Bestenliste
 
-Standardmäßig ist die Bestenliste **rein lokal** — es gibt keine Netzwerkzugriffe.
-Für eine gemeinsame Liste trägt man in `js/leaderboard.js` oben eine URL ein
-(etwa einen eigenen Schlüssel bei textdb.online):
-
-```js
-const REMOTE_URL = 'https://textdb.online/DEIN-EIGENER-SCHLUESSEL/';
-```
-
-Ohne Eintrag funktioniert alles andere unverändert.
+Global über [textdb.online](https://textdb.online) — derselbe kostenlose
+Key-Value-Speicher wie beim Wahlwächter. Sortiert wird nach Reifegrad, bei
+Gleichstand nach der insgesamt erzeugten Biomasse. Details in
+[docs/TECHNIK.md](docs/TECHNIK.md#bestenliste).
 
 ## Balance
 
-Die Zahlen sind mit einer kopflosen Simulation geprüft (ein Bot spielt das Spiel
-über hunderte Stunden). Zwei Dinge müssen dabei stimmen, sonst läuft ein
-Incremental binnen Stunden ins Unendliche:
-
-1. Das **Kostenwachstum** einer Struktur muss immer über dem Meilenstein-Wachstum
-   von 2^(1/25) = 1,0281 pro Stück liegen — sonst trägt sich jede weitere
-   Struktur selbst. Deshalb die Untergrenze von 1,10 in `engine.js`.
-2. Die **Rückkopplung** Produktion → Sporen → Produktion muss konvergieren.
-   Dafür sorgen ein gedämpfter Sporen-Exponent und ein weicher Deckel auf den
-   Gesamtmultiplikator.
-
----
-
-Gebaut mit [Claude Code](https://claude.com/claude-code).
+Die Zahlen sind mit einer kopflosen Simulation geprüft: Ein Bot spielt das Spiel
+über hunderte Stunden und meldet, wann welche Meilensteine fallen. Zwei Dinge
+müssen dabei stimmen, sonst läuft ein Incremental binnen Stunden ins Unendliche —
+beides steht ausführlich in [docs/TECHNIK.md](docs/TECHNIK.md#balance-und-ihre-fallen).

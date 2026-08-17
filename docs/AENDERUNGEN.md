@@ -1,5 +1,74 @@
 # Änderungsverlauf
 
+## v2.4 – Drei Fehler, die auf dem iPad zusammenkamen
+
+**Der Skillbaum war nach jedem Neuladen leer**
+
+Der schwerste der drei. `Save.merge()` füllt beim Laden fehlende Felder auf und
+läuft dazu über die Felder der frischen Vorlage. `nodes` und `muts` sind dort
+aber leere Tabellen `{}` — und eine leere Tabelle hat keine Felder, über die man
+laufen könnte. Also wurde dort **nichts** übernommen: Skillbaum und Mutationen
+fielen bei jedem Laden still unter den Tisch. In einer laufenden Sitzung fiel es
+nie auf, weil der Spielstand im Speicher blieb; erst das Neuladen der Seite legte
+es offen. Freie Tabellen werden jetzt vollständig übernommen, und beim Laden
+fliegen unbekannte oder unsinnige Einträge heraus.
+
+**Offline-Wachstum griff auf dem iPad überhaupt nicht**
+
+Angerechnet wurde die Abwesenheit nur beim *Neuladen* der Seite. Safari auf dem
+iPad entlädt die Seite aber nicht — es legt sie schlafen. Die Bildschleife stand
+still, und weil sie jeden Schritt auf 0,25 Sekunden deckelt, verfiel die gesamte
+Pausenzeit ersatzlos. Jetzt vergleicht die Schleife bei jedem Bild die Wanduhr:
+
+- **bis 30 Sekunden** — echte Zeit, ganz normal nachgerechnet. Kurze
+  Unterbrechungen kosten nichts mehr.
+- **darüber** — Offline-Wachstum mit Kappe und Ausbeute, dazu eine Übersicht.
+
+Das erklärt auch den **scheinbar feststeckenden Reifegrad**: Er stand nicht fest,
+das Spiel stand still, solange die Seite schlief.
+
+**Die Rückkehr wird gezeigt**
+
+Ein eigenes Fenster mit hochzählender Zahl, der abwesenden Zeit und dem, was
+dazugekommen ist: Reifegrade, neu freigeschaltete Strukturen, Erfolge und
+bereitstehende Sporen. War die Kappe im Weg, sagt es das und verweist auf den
+Ast *Zersetzung*.
+
+**Die Bestenliste nahm niemanden mehr auf**
+
+textdb.online dekodiert den übergebenen Wert **zweimal** und macht dabei im
+zweiten Durchgang aus jedem `+` ein Leerzeichen. Aus `1e+27` wurde `1e 27` — und
+damit war das gespeicherte JSON kaputt. Jedes Lesen scheiterte; da Senden mit
+Lesen beginnt, kam auch kein neuer Eintrag mehr hinein. **Ein einziger
+verstümmelter Eintrag legte die Liste für alle lahm.**
+
+- Der Datensatz enthält jetzt weder `+` noch `%`. Große Zahlen werden auf sechs
+  geltende Stellen gekürzt und ohne Vorzeichen im Exponenten geschrieben
+  (`1e27`) — das ist weiterhin gültiges JSON und übersteht den Weg unbeschadet.
+- Namen werden von beiden Zeichen befreit.
+- Beim Lesen wird alter Schaden repariert (`1e 27` → `1e+27`), damit bestehende
+  Einträge nicht verloren gehen.
+- Gesendet wird mit zwei Versuchen statt einem, zusätzlich beim Verlassen der
+  Seite.
+
+**Bestenliste in der Statistik**
+- Lädt sich beim Öffnen und danach **jede Minute** von allein nach.
+- Eine Zeile sagt, wie es um den eigenen Eintrag steht — angekommen, auf welchem
+  Platz, oder dass der letzte Versuch scheiterte. Ein stiller Fehlschlag sah
+  vorher so aus, als nehme die Liste einen einfach nicht auf.
+- Wer nicht unter den besten drei steht, sieht **seine eigene Zeile** darunter
+  angehängt.
+- Der Knopf heißt *Jetzt aktualisieren* und sendet den eigenen Stand mit.
+
+**Kleinigkeiten**
+- Unter dem Reifegrad-Balken steht die **Restzeit** bis zur nächsten Stufe. Jede
+  Stufe braucht die 2,5-fache Biomasse — ohne diese Angabe wirkt der Balken
+  mitten im Spiel wie eingefroren, obwohl er sich völlig normal verhält.
+- Ein Ziel, das sofort erreichbar ist, pulst jetzt, statt einfach voll dazustehen.
+- Gespeichert wird zusätzlich bei `pagehide`; `beforeunload` kommt auf dem iPad
+  oft gar nicht an.
+
+
 ## v2.2 – Aufgeräumt: kein Tutorial, klarere Wege, Statistik mit Rangliste
 
 **Erklärungen statt Tutorial**

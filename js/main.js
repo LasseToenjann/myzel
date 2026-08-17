@@ -5,6 +5,7 @@
 const Game = (() => {
 
   let last = 0, uiAcc = 0, saveAcc = 0, running = false;
+  let wanduhr = Date.now();      // echte Uhrzeit des letzten Bildes
 
   /* ================= Modale ================= */
   function modal(html, onOpen) {
@@ -162,27 +163,131 @@ const Game = (() => {
     UI.refreshAll();
     FX.seed();
     if (!isNew) checkOffline();
-    if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+    if (!running) { running = true; last = performance.now(); wanduhr = Date.now(); requestAnimationFrame(loop); }
   }
 
-  function checkOffline() {
-    if (!S.opt.offline) return;
-    const dt = (Date.now() - (S.lastSave || Date.now())) / 1000;
-    if (dt < 60) return;
-    const res = E.offlineGain(dt);
+  /* ================= Rueckkehr =================
+     Eine Stelle fuer beide Faelle: Seite neu geladen (lastSeen aus dem
+     Spielstand) und Seite war nur schlafen (Luecke in der Wanduhr). */
+
+  const PAUSE_GRENZE = 30;        // bis hierhin gilt es als kurze Unterbrechung
+
+  function schnappschuss() {
+    return {
+      bio: S.biomass, level: S.level, ach: S.ach.length, sporen: E.sporeGain(),
+      strukturen: S.structs.map((_, i) => E.isUnlocked(i))
+    };
+  }
+
+  /** Rechnet eine Abwesenheit an. Gibt zurueck, ob es etwas zu zeigen gab. */
+  function rueckkehr(sekunden) {
+    if (!S || !isFinite(sekunden) || sekunden <= 0) return false;
+    if (!S.opt.offline) return false;
+
+    const vorher = schnappschuss();
+    const res = E.offlineGain(sekunden);
     if (res.gain <= 0) {
-      FX.toast('Willkommen zurück', `Du warst ${U.fmtTimeShort(dt)} weg.`, '');
-      return;
+      if (sekunden > 120) FX.toast('Willkommen zurück', 'Du warst ' + U.fmtTimeShort(sekunden) + ' weg.', '');
+      return false;
     }
     E.applyOffline(res);
-    modal(`<h3>🌙 Es ist weitergewachsen</h3>
-      <p>Du warst <b>${U.fmtTime(res.raw)}</b> weg.
-      ${res.capped ? `Angerechnet wurden <b>${U.fmtTime(res.seconds)}</b> (deine Offline-Kappe).` : 'Die volle Zeit wurde angerechnet.'}</p>
-      <div class="offline-gain">+ ${U.fmt(res.gain)}</div>
-      <p style="text-align:center;font-size:12.5px">bei ${U.fmt(res.rate)} /s und ${(E.m.offlineEff * 100).toFixed(0)} % Offline-Effizienz.<br>
-      Beides lässt sich im Ast <b>Zersetzung</b> deutlich steigern.</p>
-      <div class="mrow"><button class="btn btn-primary" id="of-ok">Weitermachen</button></div>`,
-      m => U.$('#of-ok', m).onclick = close);
+    E.tick(0);                       // Reifegrad, Erfolge und Strukturen nachziehen
+
+    // Diese Meldungen stehen gleich in der Uebersicht - nicht auch noch als Toast.
+    for (let i = E.events.length - 1; i >= 0; i--) {
+      if (E.events[i].t === 'level' || E.events[i].t === 'ach') E.events.splice(i, 1);
+    }
+
+    const nachher = schnappschuss();
+    UI.refreshAll();
+    Save.write();
+    // Im Startmenue waere die Uebersicht fehl am Platz - dort wird nur gutgeschrieben.
+    const imSpiel = !U.$('#game').classList.contains('hidden');
+    if (sekunden >= 60 && imSpiel) zeigeRueckkehr(res, vorher, nachher);
+    return true;
+  }
+
+  /** Uebersicht mit hochzaehlender Zahl und dem, was dazugekommen ist. */
+  function zeigeRueckkehr(res, vorher, nachher) {
+    const stufen = nachher.level - vorher.level;
+    const erfolge = nachher.ach - vorher.ach;
+    const neueStrukturen = nachher.strukturen
+      .map((u, i) => (u && !vorher.strukturen[i]) ? D.STRUCTS[i] : null).filter(Boolean);
+    const sporenJetzt = Math.floor(nachher.sporen - vorher.sporen);
+
+    const karten = [];
+    if (stufen > 0) karten.push(['\u2737', stufen, stufen === 1 ? 'Reifegrad' : 'Reifegrade', 'lime']);
+    neueStrukturen.forEach(st => karten.push([st.ic, '', st.name + ' frei', 'lime']));
+    if (erfolge > 0) karten.push(['\u2726', erfolge, erfolge === 1 ? 'Erfolg' : 'Erfolge', 'gold']);
+    if (sporenJetzt > 0) karten.push(['\u2732', U.fmtInt(sporenJetzt), 'Sporen bereit', 'gold']);
+
+    const zeitText = res.capped
+      ? ' \u2014 angerechnet wurden <b>' + U.fmtTime(res.seconds) + '</b>, mehr fasst deine Offline-Kappe nicht.'
+      : ' \u2014 die volle Zeit wurde angerechnet.';
+    const fussText = res.capped
+      ? 'Kappe und Ausbeute steigen im Ast <b>Zersetzung</b>.'
+      : 'bei ' + U.fmt(res.rate) + ' /s und ' + (E.m.offlineEff * 100).toFixed(0) + ' % Offline-Ausbeute';
+
+    const kartenHtml = karten.length ? '<div class="rk-karten">' + karten.map(function (k, i) {
+      return '<div class="rk-karte ' + k[3] + '" style="animation-delay:' + (0.5 + i * 0.1).toFixed(2) + 's">' +
+        '<span class="rk-ic">' + k[0] + '</span>' +
+        '<span class="rk-v">' + (k[1] === '' ? '' : '+' + k[1]) + '</span>' +
+        '<span class="rk-t">' + k[2] + '</span></div>';
+    }).join('') + '</div>' : '';
+
+    modal('<div class="rueck">' +
+      '<div class="rk-mond">\ud83c\udf19</div>' +
+      '<h3>Es ist weitergewachsen</h3>' +
+      '<div class="rk-zahl"><span id="rk-count">0</span><span class="rk-einheit">Biomasse</span></div>' +
+      '<p class="rk-zeit">Du warst <b>' + U.fmtTime(res.raw) + '</b> weg' + zeitText + '</p>' +
+      kartenHtml +
+      '<p class="rk-fuss">' + fussText + '</p>' +
+      '<div class="mrow"><button class="btn btn-primary" id="rk-ok">Weitermachen</button></div>' +
+      '</div>', m => {
+        U.$('#rk-ok', m).onclick = close;
+        zaehleHoch(U.$('#rk-count', m), res.gain, 1200);
+        FX.burst(FX.W / 2, FX.H * 0.42, '#a6e85c', 26, 5);
+      });
+    FX.sfx.unlock();
+  }
+
+  /** Laesst eine Zahl weich hochlaufen - erst schnell, dann ausklingend. */
+  function zaehleHoch(el, ziel, dauer) {
+    if (!el) return;
+    const start = performance.now();
+    const schritt = jetzt => {
+      const t = Math.min(1, (jetzt - start) / dauer);
+      const weich = 1 - Math.pow(1 - t, 3);
+      el.textContent = U.fmt(ziel * weich);
+      if (t < 1) requestAnimationFrame(schritt);
+      else el.textContent = U.fmt(ziel);
+    };
+    requestAnimationFrame(schritt);
+  }
+
+  /** Beim Betreten: Zeit seit dem letzten Lebenszeichen des Spielstands. */
+  function checkOffline() {
+    const dt = (Date.now() - (S.lastSeen || S.lastSave || Date.now())) / 1000;
+    if (dt < 60) return;
+    rueckkehr(dt);
+  }
+
+  /** Nach dem Aufwachen: Wie lange stand die Schleife still?
+      Kurze Unterbrechungen werden als echte Zeit nachgerechnet, damit
+      nichts verloren geht; lange gelten als Offline-Zeit. */
+  function pruefePause() {
+    if (!S || !running) return;
+    const jetzt = Date.now();
+    const luecke = (jetzt - wanduhr) / 1000;
+    wanduhr = jetzt;
+    if (luecke <= 1.5) return;
+    if (luecke <= PAUSE_GRENZE) {
+      let rest = luecke;
+      while (rest > 0.001) { const d = Math.min(0.25, rest); E.tick(d); rest -= d; }
+      drainEvents();
+      return;
+    }
+    rueckkehr(luecke);
   }
 
   /* ================= Aktionen ================= */
@@ -400,7 +505,9 @@ const Game = (() => {
   function loop(t) {
     const dt = Math.min(0.25, (t - last) / 1000);
     last = t;
+    pruefePause();               // stand die Schleife still? Zeit nachtragen
     E.tick(dt);
+    S.lastSeen = Date.now();
     drainEvents();
     tippsPruefen();
 
@@ -443,8 +550,16 @@ const Game = (() => {
     U.$('#btn-sound').onclick = () => { S.opt.sound = !S.opt.sound; UI.refreshTop(); if (S.opt.sound) FX.sfx.click(); };
     U.$('#btn-music').onclick = () => { Music.umschalten(); UI.refreshTop(); };
     U.$('#btn-menu').onclick = () => UI.show('optionen');
+    /* Safari auf dem iPad entlaedt die Seite nicht, es legt sie schlafen -
+       beforeunload kommt dort oft gar nicht an. pagehide kommt immer. */
     window.addEventListener('beforeunload', () => { if (S) Save.write(); });
-    document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });
+    window.addEventListener('pagehide', () => { if (S) { Save.write(); LB.autoSubmit(true); } });
+    document.addEventListener('visibilitychange', () => {
+      if (!S) return;
+      if (document.hidden) { Save.write(); return; }
+      pruefePause();
+    });
+    window.addEventListener('focus', () => { if (S) pruefePause(); });
   }
 
   return { boot, enter, afterLoad, zumMenue, prestige, symbiose, showLeaderboard, ladeSicherung,

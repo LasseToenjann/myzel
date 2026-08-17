@@ -224,6 +224,24 @@ weshalb zwei Plätze auch zwei Einträge in der Rangliste erzeugen.
 Der Name ist **Pflicht**: Er wird beim Anlegen abgefragt, weil sich das Spiel von
 selbst in die Bestenliste einträgt und ein leerer Name dort nichts taugt.
 
+### Die Falle in `merge()`
+
+`Save.merge()` füllt beim Laden fehlende Felder aus der frischen Vorlage auf und
+läuft dazu über deren Felder. **Freie Tabellen haben dort keine Felder.** `nodes`
+und `muts` stehen in `fresh()` als `{}` — die Schleife lief ins Leere und übernahm
+nichts, der Skillbaum war nach jedem Neuladen weg. Innerhalb einer Sitzung fiel es
+nicht auf, weil `S` im Speicher blieb.
+
+Regel: Eine Tabelle ohne feste Felder wird **ganz** übernommen, nicht Feld für
+Feld. `saubereTabelle()` wirft danach heraus, was nicht in `D.NODE_BY_ID` bzw.
+`D.MUT_BY_ID` steht oder keine positive Zahl ist.
+
+### Zeitstempel
+
+`lastSave` ist der Zeitpunkt des letzten Schreibens, `lastSeen` der des letzten
+Takts. Für die Abwesenheit zählt `lastSeen` — es wird bei jedem Bild fortgeschrieben
+und ist damit auch dann aktuell, wenn das Speichern nicht mehr zum Zug kam.
+
 ## Musik
 
 Live erzeugt statt aus einer Datei — eine Aufnahme wären mehrere Megabyte, die
@@ -245,6 +263,31 @@ Lautstärke wird quadriert, weil das dem Höreindruck besser entspricht.
 Gestartet wird erst beim Eintritt ins Spiel — vorher verbieten Browser das Abspielen
 ohne Zutun der Nutzenden.
 
+## Offline-Wachstum und schlafende Seiten
+
+Zwei verschiedene Fälle, eine Stelle: `Game.rueckkehr(sekunden)`.
+
+**Seite neu geladen.** `checkOffline()` nimmt die Zeit seit `S.lastSeen`.
+
+**Seite hat geschlafen.** Das ist der Regelfall auf dem iPad — Safari entlädt die
+Seite nicht, es hält sie an. `requestAnimationFrame` steht still, und weil die
+Schleife jeden Schritt auf 0,25 s deckelt, verfiel die Pausenzeit früher
+vollständig. `pruefePause()` vergleicht deshalb bei jedem Bild die **Wanduhr**
+(`Date.now()`) mit dem letzten Bild:
+
+| Lücke | Behandlung |
+|---|---|
+| bis 1,5 s | nichts, das deckt der normale Takt ab |
+| bis 30 s | echte Zeit in Schritten von 0,25 s nachgerechnet |
+| darüber | Offline-Wachstum mit Kappe und Ausbeute, dazu die Übersicht |
+
+Ausgelöst wird zusätzlich über `visibilitychange` und `focus`, damit es nicht erst
+beim nächsten Bild greift. 120 Takte am Stück kosten gemessen 0,7 ms — das fällt
+in keinem Bild auf.
+
+Grundwerte: Kappe `m.offlineH` = 4 Stunden, Ausbeute `m.offlineEff` = 45 %. Beides
+steigt im Ast *Zersetzung* und im Biom *Moor*.
+
 ## Bestenliste
 
 `js/leaderboard.js`, global über [textdb.online](https://textdb.online) — derselbe
@@ -259,6 +302,32 @@ Deshalb steht dort ausschließlich, was öffentlich sein darf — Anzeigename,
 Reifegrad, Biomasse, Symbiose-Punkte, Sporenflüge. Die Einträge nutzen kurze
 Feldnamen (`i n l b s p d`), weil alles zusammen in einem Textfeld liegt.
 
+### Der Dienst dekodiert zweimal
+
+**Teuer erkauft, deshalb hier festgehalten.** textdb.online dekodiert den Wert
+beim Schreiben zweimal und macht im zweiten Durchgang aus jedem `+` ein
+Leerzeichen. Nachgemessen mit einem Wegwerf-Schlüssel:
+
+| gesendet | kommt an |
+|---|---|
+| `A+B` | `A B` |
+| `%2B` | `+` |
+| `e+27` | `e 27` |
+| `&` `#` `/` `=` | unverändert |
+
+`JSON.stringify` schreibt große Zahlen als `1e+27`. Daraus wurde `1e 27`, und das
+gespeicherte JSON war unlesbar — die ganze Liste fiel aus, für alle, wegen eines
+einzigen Eintrags.
+
+Daher gilt: **Der Datensatz darf weder `+` noch `%` enthalten.**
+
+- `zahl()` kürzt auf sechs geltende Stellen (hält die Adresse zugleich kurz)
+- `baueWert()` ersetzt `e+` durch `e` — `1e27` ist weiterhin gültiges JSON
+- `reinerName()` entfernt beide Zeichen aus Anzeigenamen
+- `write()` prüft vor dem Senden auf verbotene Zeichen und auf die Adresslänge
+  (Grenze 7500 Zeichen)
+- `lesbar()` repariert beim Lesen den alten Schaden (`e 27` → `e+27`)
+
 Jeder Spielstand hat eine dauerhafte Kennung (`S.pid`), damit erneutes Senden den
 eigenen Eintrag *aktualisiert* statt einen zweiten anzulegen. Beim Schreiben laufen
 bis zu drei Versuche, weil gleichzeitige Zugriffe sich sonst überschreiben können.
@@ -266,7 +335,12 @@ bis zu drei Versuche, weil gleichzeitige Zugriffe sich sonst überschreiben kön
 Gesendet wird **automatisch** (`LB.autoSubmit()`, angestoßen vom Speichertakt):
 höchstens alle 90 Sekunden und nur, wenn sich Reifegrad, Größenordnung der Biomasse
 oder Symbiose-Punkte geändert haben. Sonst entstünde bei jedem Tick ein Netzzugriff.
-Abschaltbar über `S.opt.autoBoard`.
+Zusätzlich beim Verlassen der Seite (`pagehide`) und auf Knopfdruck
+(`autoSubmit(true)` umgeht beide Sperren). Abschaltbar über `S.opt.autoBoard`.
+
+`LB.status()` sagt, wie es um den eigenen Eintrag steht (`neu`, `ok`, `fehler`,
+`aus`) — die Statistik zeigt es an. Vorher blieb ein Fehlschlag unsichtbar, und es
+sah so aus, als nehme die Liste einen einfach nicht auf.
 
 Ein Eintrag trägt: Kennung, Name, Reifegrad, Biomasse, Symbiose-Punkte, Sporenflüge,
 Zeitpunkt, Spielzeit, Erfolge, Skill-Stufen, Biome, beste Produktion, goldene Sporen

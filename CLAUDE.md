@@ -60,13 +60,26 @@ Richtwerte für einen pausenlos und optimal spielenden Bot:
   liegt das Kostenwachstum darunter, trägt sich jede Struktur selbst.
 - **Favicon als `data:`-URI.** Zeigt der Browser an, Google nicht. Es muss eine
   echte Datei sein (`assets/favicon.svg`).
+- **Freie Tabellen in `Save.merge()`.** `nodes` und `muts` stehen in `fresh()` als
+  `{}`. Wer sie Feld für Feld auffüllt, übernimmt nichts — der Skillbaum war
+  monatelang nach jedem Neuladen leer. Ganz übernehmen, nicht durchlaufen.
+- **`+` und `%` in der Bestenliste.** textdb.online dekodiert den Wert zweimal und
+  macht dabei aus `+` ein Leerzeichen. `1e+27` wird zu `1e 27`, das JSON ist
+  kaputt, und ein einziger solcher Eintrag legt die Liste für alle lahm.
+- **Zeit in der Bildschleife.** Der Schritt ist auf 0,25 s gedeckelt. Wer sich
+  darauf verlässt, verliert jede Pause, in der die Seite schlief — auf dem iPad
+  ist das der Normalfall. Immer gegen `Date.now()` prüfen, nicht gegen den
+  Bildzähler.
 
 ## Testen
 
 Die Spiellogik ist vollständig aus der Browser-Konsole ansteuerbar (`S`, `E`, `UI`,
-`Save` sind global). Damit lassen sich Export/Import, Kaufmengen, Meilensteine,
-Prüfungen, goldene Sporen, Offline-Kappe und beide Prestige-Schichten prüfen, ohne
-stundenlang zu spielen.
+`Save`, `LB` sind global). Damit lassen sich Export/Import, Kaufmengen,
+Meilensteine, goldene Sporen, Offline-Kappe, Bestenliste und beide
+Prestige-Schichten prüfen, ohne stundenlang zu spielen.
+
+Für die Pausen-Erkennung lässt sich `Date.now` kurzzeitig überschreiben und
+`visibilitychange` von Hand auslösen — damit ist der iPad-Fall ohne iPad prüfbar.
 
 Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
@@ -79,14 +92,18 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.2 — kein Tutorial mehr (Erklärungen erscheinen beim Freischalten), drei
-Spielstand-Plätze mit Umbenennen, Bestenliste oben in der Statistik. Davor: ohne Prüfungen, Kern zeigt den Reifegrad, Optionen nur hinter dem
-Menü, Musik startet aus. Davor: Baum mit Nebel: sichtbar ist nur das Erreichbare, die Ansicht passt
-sich selbst ein, kein Zurücksetzen mehr. Davor: jeder Ast mit eigener Wege- und Knotenform, Kreis neu sortiert,
-keine Legende mehr. Davor: Ast-Segmente wachsen mit dem Ausbau sichtbar nach außen. Davor:
-drei Spielstand-Plätze mit Namenspflicht, automatischer Eintrag in die
-Bestenliste samt Detailansicht, live erzeugte Musik, Skillbaum mit eingefärbten
-Kreissegmenten je Ast und 21 Querverbindungen.
+Version 2.4 — drei Fehler behoben, die auf dem iPad zusammenkamen: der Skillbaum
+war nach jedem Neuladen leer (`merge()` übersprang die freien Tabellen), das
+Offline-Wachstum griff nie (Safari legt die Seite schlafen, statt sie zu entladen),
+und die Bestenliste war unlesbar (`1e+27` wurde beim Schreiben zu `1e 27`). Dazu
+neu: Übersicht bei der Rückkehr, Restzeit bis zum nächsten Reifegrad, Bestenliste
+mit Statuszeile und eigener Position.
+
+Davor: kein Tutorial mehr (Erklärungen erscheinen beim Freischalten), drei
+Spielstand-Plätze mit Umbenennen, Bestenliste oben in der Statistik, Erfolge in
+fünf farbigen Gruppen. Davor: ohne Prüfungen, Kern zeigt den Reifegrad, Optionen
+nur hinter dem Menü, Musik startet aus. Davor: Baum mit Nebel, jeder Ast mit
+eigener Wege- und Knotenform, 21 Querverbindungen, live erzeugte Musik.
 
 Tasten: `S` löst die Symbiose aus. Eine Taste fürs Speichern gibt es bewusst nicht —
 das läuft automatisch.

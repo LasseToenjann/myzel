@@ -79,12 +79,12 @@ zurück ins Startmenü, um den Spielstand zu wechseln.
   zeitlich begrenzten Boost — meist etwas Kleines, manchmal Produktion ×7.
 - **Ruhewachstum**: Wenn du 90 Sekunden nicht klickst, steigt die Produktion. Der
   Ast *Zersetzung* baut das aus. Nichtstun ist eine gültige Strategie.
-- **Offline** wächst das Netz weiter. Wie lange und wie effizient, bestimmst du
-  ebenfalls in *Zersetzung*.
+- **Offline** wächst das Netz weiter — auch wenn du das Fenster nur zur Seite
+  legst. Bei der Rückkehr zeigt dir das Spiel, was in der Zeit dazugekommen ist.
+  Angerechnet werden im Grundzustand vier Stunden zu 45 %; wie lange und wie
+  ergiebig, bestimmst du in *Zersetzung* und im Biom *Moor*.
 - **Autokäufer** lassen sich je Struktur einzeln abschalten (der kleine
   AUTO-Knopf rechts oben in der Zeile).
-- Der **Skillbaum lässt sich jederzeit zurücksetzen** — ohne Verlust. Ausprobieren
-  kostet nichts.
 - Ein Knoten, der **gesperrt** ist, sagt auch warum. Sporen-Boni etwa gibt es erst
   nach dem ersten Sporenflug — vorher würden sie ins Leere gehen.
 - **Musik**: ein ruhiger Klangteppich, der laufend neu entsteht und sich nie
@@ -103,7 +103,8 @@ zurück ins Startmenü, um den Spielstand zu wechseln.
 
 ## Spielstand
 
-Gespeichert wird **automatisch** — alle paar Sekunden und beim Verlassen der Seite.
+Gespeichert wird **automatisch** — alle paar Sekunden, beim Wegschalten und beim
+Verlassen der Seite.
 Du musst nichts tun, und es gibt keine Speichern-Taste. Unter **Optionen → Spielstand**
 lässt sich eine Sicherung als Datei ablegen und auf einem anderen Gerät wieder
 einlesen.
@@ -115,8 +116,13 @@ sich etwas geändert hat. Abschalten geht in den Optionen.
 
 Sortiert wird nach Reifegrad, bei Gleichstand nach der insgesamt erzeugten Biomasse.
 Eine Zeile antippen zeigt alles Weitere: beste Produktion, Sporenflüge,
-Symbiose-Punkte, Biome, Skill-Stufen, Erfolge, Prüfungsstufen, goldene Sporen,
-Spielzeit und wann zuletzt gespielt wurde.
+Symbiose-Punkte, Biome, Skill-Stufen, Erfolge, goldene Sporen, Spielzeit und wann
+zuletzt gespielt wurde.
+
+Die Liste steht oben in der **Statistik**, zeigt die besten drei und auf Knopfdruck
+alle. Stehst du weiter hinten, wird deine eigene Zeile darunter angehängt. Eine
+Zeile darüber sagt, ob dein Eintrag angekommen ist — und wenn nicht, dass der
+nächste Versuch von allein läuft.
 
 ## Wie lange dauert das?
 

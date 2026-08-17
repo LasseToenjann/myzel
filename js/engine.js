@@ -477,7 +477,7 @@ const E = (() => {
       const st = D.STRUCTS[i];
       if (isUnlocked(i)) continue;
       if (st.needNode && !S.nodes[st.needNode]) {
-        return { txt: `Skill „${D.NODE_BY_ID[st.needNode].name}" schaltet ${st.name} frei`, p: 1 };
+        return { txt: `Skill „${D.NODE_BY_ID[st.needNode].name}" schaltet ${st.name} frei`, p: 1, jetzt: true };
       }
       return { txt: `${st.name} bei ${U.fmt(st.unlock)} Biomasse gesamt`, p: U.clamp(S.lifetime / st.unlock, 0, 1) };
     }
@@ -488,7 +488,7 @@ const E = (() => {
     // 3) Symbiose
     if (!symUnlocked()) {
       const n = D.NODE_BY_ID['t_sym'];
-      return { txt: `Skill „${n.name}" öffnet die Symbiose-Schicht`, p: 1 };
+      return { txt: `Skill „${n.name}" öffnet die Symbiose-Schicht`, p: 1, jetzt: true };
     }
     if (spGain() < 1) {
       return { txt: `Symbiose bei ${U.fmt(1e6)} Sporen gesamt`, p: U.clamp(Math.log10(Math.max(1, S.sporeLife)) / 6, 0, 1) };

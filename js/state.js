@@ -43,6 +43,7 @@ const Save = (() => {
       idleTime: 0,
       goldTimer: 130,
       lastSave: Date.now(),
+      lastSeen: Date.now(),
       seenTabs: [],
       seenTips: [],
       stats: { clicks: 0, golds: 0, offlineRuns: 0, maxIdle: 0, bestSpores: 0, bestRate: 0, started: Date.now(), fastest: 0 },
@@ -51,19 +52,42 @@ const Save = (() => {
     };
   }
 
-  /** Tiefes Auffüllen fehlender Felder (Migration). */
+  /** Tiefes Auffüllen fehlender Felder (Migration).
+
+      Achtung bei freien Tabellen: nodes und muts haben in fresh() keine
+      festen Schlüssel. Ein "for (const k in target)" läuft dort ins Leere
+      und würde den gesamten Skillbaum verwerfen - genau das ist passiert.
+      Solche Tabellen werden deshalb vollständig übernommen. */
   function merge(target, src) {
     for (const k in target) {
-      if (src[k] === undefined || src[k] === null) continue;
+      const q = src[k];
+      if (q === undefined || q === null) continue;
       if (Array.isArray(target[k])) {
-        target[k] = src[k].slice();
-      } else if (typeof target[k] === 'object') {
-        merge(target[k], src[k]);
+        if (Array.isArray(q)) target[k] = q.slice();
+      } else if (target[k] && typeof target[k] === 'object') {
+        if (typeof q !== 'object') continue;
+        if (Object.keys(target[k]).length === 0) {
+          target[k] = Object.assign({}, q);      // freie Tabelle: ganz übernehmen
+        } else {
+          merge(target[k], q);                    // festes Feld: einzeln auffüllen
+        }
       } else {
-        target[k] = src[k];
+        target[k] = q;
       }
     }
     return target;
+  }
+
+  /** Nur Zahlen >= 0 durchlassen - schützt Skillbaum und Mutationen vor
+      kaputten Werten aus einer alten oder verfälschten Sicherung. */
+  function saubereTabelle(tab, erlaubt) {
+    const raus = {};
+    for (const k in tab) {
+      if (erlaubt && !erlaubt[k]) continue;
+      const v = Math.floor(Number(tab[k]));
+      if (isFinite(v) && v > 0) raus[k] = v;
+    }
+    return raus;
   }
 
   /* ---------- Plätze ----------
@@ -120,13 +144,20 @@ const Save = (() => {
     const data = peek(aktiv);
     if (!data) return false;
     S = merge(fresh(), data);
-    // Sicherheitsnetz gegen kaputte Werte
+    pruefe();
+    return true;
+  }
+
+  /** Sicherheitsnetz gegen kaputte Werte - nach jedem Laden und Import. */
+  function pruefe() {
     if (!isFinite(S.biomass) || S.biomass < 0) S.biomass = 0;
     if (!isFinite(S.lifetime) || S.lifetime < 0) S.lifetime = 0;
     S.structs = S.structs.map(v => Math.max(0, Math.floor(v || 0)));
     S.bought = S.bought.map((v, i) => Math.max(S.structs[i], Math.floor(v || 0)));
     S.buffs = (S.buffs || []).filter(b => b && D.BUFF_BY_ID[b.id]);
-    return true;
+    S.nodes = saubereTabelle(S.nodes, D.NODE_BY_ID);
+    S.muts = saubereTabelle(S.muts, D.MUT_BY_ID);
+    if (!S.lastSeen) S.lastSeen = S.lastSave || Date.now();
   }
 
   function newGame(name, i) {
@@ -148,6 +179,7 @@ const Save = (() => {
   function write() {
     if (!S) return false;
     S.lastSave = Date.now();
+    S.lastSeen = Date.now();
     try {
       localStorage.setItem(slotKey(aktiv), U.encode(S));
       return true;
@@ -163,6 +195,7 @@ const Save = (() => {
     const data = U.decode(str);
     if (!data || typeof data !== 'object' || data.structs === undefined) return false;
     S = merge(fresh(), data);
+    pruefe();
     write();
     return true;
   }

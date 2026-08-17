@@ -240,6 +240,7 @@ const UI = (() => {
     }
     setHTML(R.goalTxt, g.txt);
     setW(R.goalBar, g.p * 100);
+    R.goalbar.classList.toggle('bereit', !!g.jetzt);
 
     setText(U.$('#bc-val'), '+' + U.fmt(E.clickGain));
     orbAktualisieren();
@@ -904,21 +905,27 @@ const UI = (() => {
       <p class="hint" id="lb-info">Sortiert nach Reifegrad, bei Gleichstand nach der gesamten
         Biomasse. Zeile antippen für Einzelheiten.</p>
       <div class="lb-list" id="lb-box"><p style="opacity:.6">Wird geladen …</p></div>
+      <p class="hint" id="lb-status"></p>
       <div class="lb-knoepfe">
         <button class="btn sm" id="lb-mehr">Ganze Liste</button>
-        <button class="btn sm ghost" id="lb-neu">Neu laden</button>
+        <button class="btn sm ghost" id="lb-neu">Jetzt aktualisieren</button>
       </div>
       <h2 class="sec" style="margin-top:32px">Dein Myzel</h2>
       <div id="stats"></div>`;
     R.statGrid = U.$('#stats');
     R.lbBox = U.$('#lb-box');
     R.lbAlle = false;
-    U.$('#lb-neu').onclick = () => ladeBestenliste(true);
+    U.$('#lb-neu').onclick = () => {
+      setHTML(R.lbBox, '<p style="opacity:.6">Wird gesendet …</p>');
+      lbGeladen = Date.now();
+      LB.autoSubmit(true).then(() => ladeBestenliste(true));
+    };
     U.$('#lb-mehr').onclick = () => {
       R.lbAlle = !R.lbAlle;
       setText(U.$('#lb-mehr'), R.lbAlle ? 'Nur die besten drei' : 'Ganze Liste');
       ladeBestenliste();
     };
+    lbGeladen = Date.now();
     ladeBestenliste();
   }
 
@@ -955,8 +962,25 @@ const UI = (() => {
     ];
   }
 
+  /* Die Liste laedt sich beim Oeffnen und danach jede Minute selbst nach -
+     vorher stand dort bis zum Neuladen der Seite immer derselbe Stand. */
+  let lbGeladen = 0;
+
+  /** Sagt, ob der eigene Eintrag angekommen ist. Ein stiller Fehlschlag
+      sah vorher so aus, als nehme die Liste einen einfach nicht auf. */
+  function lbHinweis() {
+    const z = LB.status();
+    if (z.stand === 'aus') return 'Dein Eintrag wird gerade nicht gesendet — das lässt sich in den Optionen einschalten.';
+    if (z.stand === 'fehler') return 'Dein Eintrag ließ sich zuletzt nicht senden. Der nächste Versuch läuft von allein.';
+    if (z.stand === 'ok' && z.drin) return `Du stehst auf Platz <b>${z.rang}</b> — der Eintrag hält sich von allein aktuell.`;
+    if (z.stand === 'ok') return 'Dein Eintrag ist angekommen, reicht aber noch nicht in die besten 50.';
+    return 'Dein Eintrag wird beim Spielen von allein gesendet.';
+  }
+
   function refreshStat() {
     if (!built.statistik) return;
+    if (Date.now() - lbGeladen > 60000) { lbGeladen = Date.now(); ladeBestenliste(); }
+    setHTML(U.$('#lb-status'), lbHinweis());
     const gruppen = statGruppen();
     if (!R.statCells) {
       R.statGrid.innerHTML = gruppen.map(([titel, zeilen]) => `
@@ -984,11 +1008,22 @@ const UI = (() => {
     setHTML(U.$('#lb-info'), online
       ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse. Zeile antippen für Einzelheiten.'
       : 'Gerade nicht erreichbar — hier steht der zuletzt geladene Stand.');
-    R.lbBox.innerHTML = list.slice(0, R.lbAlle ? 25 : 3).map((e, i) => `
-      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === meine ? 'me' : ''}" data-i="${i}">
+    const zeige = R.lbAlle ? 25 : 3;
+    const eigen = list.findIndex(e => e.id && e.id === meine);
+    const reihen = list.slice(0, zeige).map((e, i) => i);
+    // Wer nicht unter den ersten Plaetzen steht, sieht sich trotzdem selbst.
+    if (eigen >= zeige) reihen.push(eigen);
+
+    const zeile = i => {
+      const e = list[i];
+      return `<div class="lb-row ${i === 0 ? 'top1' : ''} ${i === eigen ? 'me' : ''}" data-i="${i}">
         <span class="r">${i + 1}</span><span class="n">${Game.escape(e.name)}</span>
         <span class="lbv">Reifegrad <b>${e.level}</b></span><span class="lb-more">▾</span>
-      </div><div class="lb-detail" data-d="${i}"></div>`).join('');
+      </div><div class="lb-detail" data-d="${i}"></div>`;
+    };
+    R.lbBox.innerHTML = reihen.map((i, n) =>
+      (n === zeige && eigen >= zeige ? '<div class="lb-luecke">···</div>' : '') + zeile(i)).join('');
+    R.lbBox.__h = null;          // direkt geschrieben - Zwischenspeicher verwerfen
     U.$$('.lb-row', R.lbBox).forEach(row => {
       row.onclick = () => {
         const i = +row.dataset.i, e = list[i];
@@ -1119,6 +1154,7 @@ const UI = (() => {
     const p = E.levelProgress();
     U.$('#t-xpfill').style.width = (p * 100).toFixed(1) + '%';
     U.$('#t-xptxt').textContent = (p * 100).toFixed(1) + ' %';
+    setText(U.$('#t-xpeta'), reifeRestzeit());
     U.$('#t-wp').textContent = U.fmtInt(E.wpAvail());
     const sw = U.$('#t-spore-wrap');
     sw.classList.toggle('hidden', S.sporeLife === 0 && S.sporen === 0);
@@ -1129,6 +1165,18 @@ const UI = (() => {
     U.$('#btn-sound').classList.toggle('off', !S.opt.sound);
     U.$('#btn-music').classList.toggle('off', !S.opt.music);
     refreshBuffs();
+  }
+
+  /** Grobe Restzeit bis zum naechsten Reifegrad, bei gleichbleibender
+      Produktion. Jeder Reifegrad braucht die 2,5-fache Biomasse - ohne
+      diese Angabe wirkt der Balken mitten im Spiel wie eingefroren,
+      obwohl er sich voellig normal verhaelt. */
+  function reifeRestzeit() {
+    const noetig = E.lifetimeForLevel(S.level + 1) / Math.max(1e-12, E.m.xp);
+    const fehlt = noetig - S.lifetime;
+    if (fehlt <= 0) return 'gleich so weit';
+    if (E.total <= 0) return '';
+    return 'noch ~' + U.fmtTimeShort(fehlt / E.total);
   }
 
   /** Laufende Buffs der goldenen Sporen mit Restzeit. */

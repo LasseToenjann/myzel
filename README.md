@@ -6,7 +6,8 @@ Du zersetzt, wächst, verzweigst dich — und irgendwann durchziehst du ganze Bi
 **Spielen:** https://lassetoenjann.github.io/myzel/
 
 Läuft komplett im Browser, ohne Konto und ohne Installation. Drei Spielstand-Plätze,
-automatisches Speichern, globale Bestenliste und ein ruhiger Klangteppich, der live
+automatisches Speichern, Offline-Wachstum mit Übersicht bei der Rückkehr,
+globale Bestenliste und ein ruhiger Klangteppich, der live
 erzeugt wird.
 
 ---

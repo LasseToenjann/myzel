@@ -108,7 +108,12 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.6.0 — beim Reifegrad steht der genaue Stand statt einer geschaetzten
+Version 2.6.1 — die Scrollleiste in Modalen sieht aus wie die in den Reitern.
+Wer eine neue scrollende Flaeche baut, traegt sie in den Abschnitt
+„Scrollleisten" in `style.css` ein; ohne das zeichnet Windows seine graue
+Standardleiste mit Pfeilen hinein.
+
+Davor: Version 2.6.0 — beim Reifegrad steht der genaue Stand statt einer geschaetzten
 Restzeit; drei i-Knoepfe erklaeren Reifegrad, Sporenflug und Symbiose mit den
 echten Formeln und den Zahlen des Spielers (`D.INFO` in `data.js`).
 

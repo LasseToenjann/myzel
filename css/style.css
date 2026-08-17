@@ -635,7 +635,12 @@ input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(-
 .node-panel::-webkit-scrollbar-thumb,.lb-list::-webkit-scrollbar-thumb{
   background:rgba(79,224,160,.25);border-radius:4px}
 .node-panel::-webkit-scrollbar-track,.lb-list::-webkit-scrollbar-track{background:transparent}
-.tab-panel{scrollbar-width:thin;scrollbar-color:rgba(79,224,160,.25) transparent}
+/* Modale scrollen genauso wie die Reiter darunter - ohne diese Zeilen zeichnete
+   Windows seine graue Standardleiste samt Pfeilen in den runden Rahmen. */
+.tab-panel,.modal{scrollbar-width:thin;scrollbar-color:rgba(79,224,160,.25) transparent}
+.modal::-webkit-scrollbar{width:9px}
+.modal::-webkit-scrollbar-thumb{background:rgba(79,224,160,.22);border-radius:5px}
+.modal::-webkit-scrollbar-track{background:transparent}
 
 /* ============ Skillbaum: Kategorien sichtbar ============ */
 .branch-seg{pointer-events:none;opacity:.6;

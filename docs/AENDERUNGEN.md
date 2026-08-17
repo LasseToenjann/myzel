@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## v2.6.1 – Die Scrollleiste im Modal
+
+Modale Fenster waren die einzige scrollende Fläche im Spiel ohne eigene
+Leistenfarbe. Windows zeichnete dort seine graue Standardleiste samt Pfeiltasten
+mitten in den abgerundeten Rahmen. Sie sieht jetzt aus wie die in den Reitern:
+9 px, grüner Daumen, keine Spur, keine Pfeile. Gemessen sind beide exakt 10 px
+breit.
+
+
 ## v2.6.0 – Zwei echte Zahlen statt einer erfundenen Dauer, und drei Erklärungen
 
 **Beim Reifegrad stand eine Restzeit.** Sie war eine Hochrechnung mit der

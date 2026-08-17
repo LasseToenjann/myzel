@@ -101,7 +101,10 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.5 — der Reifeschub verschenkt keine dauerhaften Reifegrade mehr; sein
+Version 2.5.1 — der Bestenlisten-Eintrag haelt sich auch im Wiederaufbau aktuell
+(Herzschlag alle 5 min, feinerer Fingerabdruck).
+
+Davor: Version 2.5 — der Reifeschub verschenkt keine dauerhaften Reifegrade mehr; sein
 Anteil wird waehrend der Laufzeit erarbeitet. Stufendauer unveraendert.
 
 Davor: Version 2.4.2 — die Aufbau-Anzeige greift auch fuer Spielstaende, die vor ihrer

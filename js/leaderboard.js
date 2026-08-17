@@ -26,6 +26,7 @@ const LB = (() => {
   const MAX = 50;
   const TIMEOUT_MS = 8000;
   const AUTO_MS = 90000;          // frühestens alle 90 s von selbst senden
+  const HERZ_MS = 300000;         // spätestens alle 5 min, auch ohne Änderung
 
   /* ---------- Speicherformat ----------
      Kurze Feldnamen, weil alle Einträge zusammen in einem Textfeld liegen. */
@@ -203,6 +204,19 @@ const LB = (() => {
      wenn sich auch etwas geändert hat, und höchstens alle 90 Sekunden -
      sonst entstünde bei jedem Tick ein Netzzugriff. */
   let letzterStand = '', letzterZeitpunkt = 0, laeuft = false;
+
+  /* Fingerabdruck des eigenen Eintrags. Frueher steckten hier nur Reifegrad,
+     Groessenordnung der Biomasse und Symbiose-Punkte darin - und genau die
+     bewegen sich nach einem Sporenflug ueber Stunden nicht. Der Eintrag blieb
+     dann stehen, obwohl laufend gespielt wurde. Jetzt zaehlt alles mit, was
+     im Eintrag auch angezeigt wird. */
+  function fingerabdruck() {
+    const e = myEntry();
+    return [
+      e.level, Math.round(Math.log10(e.bio + 1) * 1000), e.sp, e.pres,
+      e.ach, e.nodes, e.biomes, e.golds, Math.round(Math.log10(e.rate + 1) * 100)
+    ].join('|');
+  }
   let zustand = { stand: 'neu', zuletzt: 0, drin: false, rang: 0 };
 
   /** Wie es um den eigenen Eintrag steht - die Statistik zeigt es an.
@@ -230,9 +244,11 @@ const LB = (() => {
     if (!S || !S.name) return Promise.resolve(null);
     if (!S.opt.autoBoard) return Promise.resolve(null);
     if (laeuft) return Promise.resolve(null);
-    if (!sofort && Date.now() - letzterZeitpunkt < AUTO_MS) return Promise.resolve(null);
-    const stand = S.level + '|' + Math.round(Math.log10(S.lifetime + 1) * 100) + '|' + S.spLife;
-    if (!sofort && stand === letzterStand) return Promise.resolve(null);
+    const abstand = Date.now() - letzterZeitpunkt;
+    if (!sofort && abstand < AUTO_MS) return Promise.resolve(null);
+    const stand = fingerabdruck();
+    // Entweder hat sich etwas geaendert, oder der Herzschlag ist faellig.
+    if (!sofort && stand === letzterStand && abstand < HERZ_MS) return Promise.resolve(null);
     laeuft = true;
     letzterZeitpunkt = Date.now();
     return submit(2)
@@ -244,5 +260,6 @@ const LB = (() => {
   /** Nach einem Namenswechsel soll sofort wieder gesendet werden dürfen. */
   function resetAuto() { letzterStand = ''; letzterZeitpunkt = 0; }
 
-  return { fetchList, submit, autoSubmit, resetAuto, umbenennen, myEntry, playerId, status, MAX };
+  return { fetchList, submit, autoSubmit, resetAuto, umbenennen, myEntry, playerId, status,
+    MAX, AUTO_MS, HERZ_MS };
 })();

@@ -1,5 +1,44 @@
 # Änderungsverlauf
 
+## v2.5.1 – Der eigene Eintrag blieb im Wiederaufbau stehen
+
+Gesendet wurde nur, wenn sich Reifegrad, die Größenordnung der Biomasse oder
+die Symbiose-Punkte änderten. Nach einem Sporenflug bewegt sich davon aber
+stundenlang nichts — die Biomasse wächst im Verhältnis zur bereits erzeugten
+Menge kaum noch. Nachgerechnet, wann der nächste Versand fällig gewesen wäre:
+
+| Zustand | Produktion | nächster Versand |
+|---|---|---|
+| Reifegrad 22, volle Produktion | 1,47 Mio /s | 1,1 min |
+| **Reifegrad 22, mitten im Aufbau** | **20 /s** | **54 Tage** |
+| Reifegrad 30, volle Produktion | 500 Mio /s | 5,0 min |
+| **Reifegrad 30, kurz nach dem Flug** | **300 /s** | **5816 Tage** |
+
+Man spielte also weiter, und der eigene Eintrag stand still.
+
+**Neu ist der Takt:**
+
+- Der Fingerabdruck umfasst jetzt **alles, was im Eintrag steht** — auch
+  Skill-Stufen, Erfolge, Sporen, Biome, goldene Sporen und die beste
+  Produktion. Und er ist zehnmal feiner als vorher.
+- Dazu ein **Herzschlag**: Spätestens alle **fünf Minuten** wird ohnehin
+  gesendet, auch wenn sich nichts geändert hat.
+- Der Schutzabstand von **90 Sekunden** zwischen zwei Sendungen bleibt.
+
+Gemessen über 25 Minuten im Wiederaufbau: acht Sendungen, größter Abstand
+exakt fünf Minuten. Vorher wäre es bei einer geblieben.
+
+Die Statuszeile in der Statistik nennt jetzt auch, wann zuletzt gesendet wurde.
+
+**Zur Einordnung — drei Takte gibt es:**
+
+| Was | Wie oft |
+|---|---|
+| eigener Eintrag geht raus | bei Änderung, höchstens alle 90 s · mindestens alle 5 min · beim Verlassen der Seite |
+| angezeigte Liste lädt nach | jede Minute, solange die Statistik offen ist |
+| Knopf *Jetzt aktualisieren* | sofort, umgeht beide Sperren |
+
+
 ## v2.5 – Der Reifeschub verschenkt keine Reifegrade mehr
 
 Die goldene Spore **Reifeschub** multipliziert die Reifung 120 Sekunden lang mit

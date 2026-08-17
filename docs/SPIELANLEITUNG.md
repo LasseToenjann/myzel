@@ -129,8 +129,11 @@ einlesen.
 
 ## Bestenliste
 
-Dein Stand wird **von selbst eingetragen**, höchstens alle 90 Sekunden und nur, wenn
-sich etwas geändert hat. Abschalten geht in den Optionen.
+Dein Stand wird **von selbst eingetragen** — höchstens alle 90 Sekunden, und
+spätestens alle fünf Minuten, auch wenn sich nichts geändert hat. Beim Verlassen
+der Seite geht er ebenfalls raus. Die angezeigte Liste lädt sich jede Minute
+selbst nach; *Jetzt aktualisieren* macht beides sofort. Abschalten geht in den
+Optionen.
 
 Sortiert wird nach Reifegrad, bei Gleichstand nach der insgesamt erzeugten Biomasse.
 Eine Zeile antippen zeigt alles Weitere: beste Produktion, Sporenflüge,

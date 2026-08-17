@@ -399,9 +399,22 @@ Jeder Spielstand hat eine dauerhafte Kennung (`S.pid`), damit erneutes Senden de
 eigenen Eintrag *aktualisiert* statt einen zweiten anzulegen. Beim Schreiben laufen
 bis zu drei Versuche, weil gleichzeitige Zugriffe sich sonst überschreiben können.
 
-Gesendet wird **automatisch** (`LB.autoSubmit()`, angestoßen vom Speichertakt):
-höchstens alle 90 Sekunden und nur, wenn sich Reifegrad, Größenordnung der Biomasse
-oder Symbiose-Punkte geändert haben. Sonst entstünde bei jedem Tick ein Netzzugriff.
+Gesendet wird **automatisch** (`LB.autoSubmit()`, angestoßen vom Speichertakt),
+und zwar nach drei Regeln:
+
+| Regel | Wert |
+|---|---|
+| Schutzabstand zwischen zwei Sendungen | `AUTO_MS` = 90 s |
+| Herzschlag, auch ohne Änderung | `HERZ_MS` = 5 min |
+| sonst nur bei geändertem Fingerabdruck | `fingerabdruck()` |
+
+Der Fingerabdruck deckt **alles ab, was im Eintrag steht**. Vorher waren es nur
+Reifegrad, `log10(lifetime)*100` und Symbiose-Punkte — und genau die bewegen sich
+nach einem Sporenflug über Stunden nicht, weil die Biomasse im Verhältnis zur
+bereits erzeugten Menge kaum wächst. Nachgerechnet: Bei Reifegrad 22 mitten im
+Wiederaufbau wäre der nächste Versand in **54 Tagen** fällig gewesen, bei
+Reifegrad 30 kurz nach einem Flug in über 5800. Der Herzschlag ist die
+Rückversicherung dagegen.
 Zusätzlich beim Verlassen der Seite (`pagehide`) und auf Knopfdruck
 (`autoSubmit(true)` umgeht beide Sperren). Abschaltbar über `S.opt.autoBoard`.
 

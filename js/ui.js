@@ -970,11 +970,12 @@ const UI = (() => {
       sah vorher so aus, als nehme die Liste einen einfach nicht auf. */
   function lbHinweis() {
     const z = LB.status();
+    const seit = z.zuletzt ? ' Zuletzt gesendet vor ' + U.fmtTimeShort((Date.now() - z.zuletzt) / 1000) + '.' : '';
     if (z.stand === 'aus') return 'Dein Eintrag wird gerade nicht gesendet — das lässt sich in den Optionen einschalten.';
-    if (z.stand === 'fehler') return 'Dein Eintrag ließ sich zuletzt nicht senden. Der nächste Versuch läuft von allein.';
-    if (z.stand === 'ok' && z.drin) return `Du stehst auf Platz <b>${z.rang}</b> — der Eintrag hält sich von allein aktuell.`;
-    if (z.stand === 'ok') return 'Dein Eintrag ist angekommen, reicht aber noch nicht in die besten 50.';
-    return 'Dein Eintrag wird beim Spielen von allein gesendet.';
+    if (z.stand === 'fehler') return 'Dein Eintrag ließ sich zuletzt nicht senden. Der nächste Versuch läuft von allein.' + seit;
+    if (z.stand === 'ok' && z.drin) return `Du stehst auf Platz <b>${z.rang}</b>.` + seit;
+    if (z.stand === 'ok') return 'Dein Eintrag ist angekommen, reicht aber noch nicht in die besten 50.' + seit;
+    return 'Dein Eintrag geht beim Spielen von allein raus — spätestens alle fünf Minuten.';
   }
 
   function refreshStat() {

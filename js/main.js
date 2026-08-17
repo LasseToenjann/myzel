@@ -98,21 +98,46 @@ const Game = (() => {
     });
   }
 
+  /** Kurze, bebilderte Einführung. Fünf Schritte statt eines Absatzes -
+      wer ein Spiel startet, liest keine Textwand. */
+  const SCHRITTE = [
+    ['\ud83c\udf31', 'N\u00e4hren', 'Antippen gibt Biomasse. Das ist der Anfang von allem.'],
+    ['\u2b22', 'Bauen', 'Von der Biomasse Strukturen kaufen \u2014 die arbeiten dann allein weiter.'],
+    ['\u2748', 'Reifen', 'Genug Biomasse bringt Reifegrad, und der gibt Punkte f\u00fcr den Skillbaum.'],
+    ['\u273a', 'Aufl\u00f6sen', 'Beim Sporenflug beginnst du neu \u2014 mit dauerhaftem Bonus.'],
+    ['\u262d', 'Verbinden', 'Zuletzt gehst du eine Symbiose mit ganzen Biomen ein.']
+  ];
+
   function showAbout() {
-    modal(`<h3>Worum geht es?</h3>
-      <p>Du bist ein <b>Myzel</b> — das Pilzgeflecht unter dem Waldboden. Du zersetzt, wächst und
-      verbindest dich mit allem, was im Boden liegt.</p>
-      <p><b>So spielt es sich:</b></p>
-      <p>1. <b>Nähren</b> und Strukturen kaufen. Strukturen erzeugen Biomasse von allein.<br>
-      2. Genug Biomasse bringt <b>Reifegrad</b>. Jeder Reifegrad gibt <b>Wachstumspunkte</b>.<br>
-      3. Punkte steckst du in den <b>Skillbaum</b>. Der bleibt für immer — auch nach jedem Reset.<br>
-      4. Später löst du dich beim <b>Sporenflug</b> auf und wächst mit dauerhaftem Bonus neu.<br>
-      5. Noch später gehst du eine <b>Symbiose</b> mit ganzen Biomen ein.</p>
-      <p>Das Spiel läuft auch weiter, wenn du es schließt. Es ist zum nebenbei Spielen gedacht:
-      Es gibt keinen Verlust, keine Zeitfenster, keinen Druck.</p>
-      <p style="font-size:12.5px;opacity:.7">Gespeichert wird automatisch im Browser dieses Geräts.</p>
-      <div class="mrow"><button class="btn btn-primary" id="ab-ok">Verstanden</button></div>`,
-      m => U.$('#ab-ok', m).onclick = close);
+    modal(`<div class="intro">
+      <div class="intro-kopf">
+        <svg class="intro-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <g fill="none" stroke="#4fe0a0" stroke-width="2.4" stroke-linecap="round">
+            <path d="M60 104 V64"/><path d="M60 76 L36 58"/><path d="M60 76 L84 58"/>
+            <path d="M60 64 L44 44"/><path d="M60 64 L76 44"/>
+          </g>
+          <g fill="#a6e85c">
+            <circle cx="60" cy="64" r="5"/><circle cx="36" cy="58" r="3.4"/>
+            <circle cx="84" cy="58" r="3.4"/><circle cx="44" cy="44" r="3"/><circle cx="76" cy="44" r="3"/>
+          </g>
+        </svg>
+        <div>
+          <h3>Du bist ein Myzel</h3>
+          <p class="intro-sub">Das Pilzgeflecht unter dem Waldboden. Du zersetzt, wächst
+            und verbindest dich mit allem, was im Boden liegt.</p>
+        </div>
+      </div>
+      <div class="intro-schritte">
+        ${SCHRITTE.map(([ic, t, d], i) => `
+          <div class="ischritt" style="animation-delay:${(0.12 + i * 0.09).toFixed(2)}s">
+            <span class="is-ic">${ic}</span>
+            <div><b>${t}</b><span>${d}</span></div>
+          </div>`).join('')}
+      </div>
+      <p class="intro-fuss">Es läuft weiter, wenn du schließt. Kein Verlust, keine
+        Zeitfenster, kein Druck — und gespeichert wird von allein.</p>
+      <div class="mrow"><button class="btn btn-primary" id="ab-ok">Los geht's</button></div>
+    </div>`, m => U.$('#ab-ok', m).onclick = close);
   }
 
   /* ================= Eintritt ins Spiel ================= */

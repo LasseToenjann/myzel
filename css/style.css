@@ -644,3 +644,36 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .card.mut .cbtn b{color:var(--gold);font-weight:700}
 .card.mut.can .cbtn b{color:#1a1400}
 .card.mut.maxed::after{top:11px;right:13px}
+
+/* ============ Einführung ============ */
+.intro-kopf{display:flex;gap:16px;align-items:center;margin-bottom:20px}
+.intro-mark{width:74px;height:74px;flex-shrink:0;
+  filter:drop-shadow(0 0 16px rgba(79,224,160,.45));animation:markAtem 4s ease-in-out infinite}
+@keyframes markAtem{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.intro-kopf h3{margin-bottom:5px;font-size:21px}
+.intro-sub{font-size:13px;color:var(--dim);line-height:1.6;margin:0}
+.intro-schritte{display:flex;flex-direction:column;gap:8px}
+.ischritt{display:flex;gap:13px;align-items:flex-start;padding:11px 14px;border-radius:var(--r-s);
+  background:rgba(0,0,0,.26);border-left:2px solid var(--acc);
+  animation:ischrittAuf .5s ease backwards}
+@keyframes ischrittAuf{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.is-ic{font-size:20px;line-height:1.2;width:26px;text-align:center;flex-shrink:0}
+.ischritt b{display:block;font-size:14px;margin-bottom:2px}
+.ischritt span{font-size:12.5px;color:var(--dim);line-height:1.55}
+.intro-fuss{font-size:12.5px;color:var(--dim2);line-height:1.6;margin:18px 0 0;text-align:center}
+.intro .mrow{justify-content:center}
+.intro .mrow .btn{min-width:190px}
+@media(max-height:820px),(max-width:520px){
+  .intro-kopf{gap:12px;margin-bottom:14px}
+  .intro-mark{width:56px;height:56px}
+  .intro-kopf h3{font-size:18px}
+  .intro-sub{font-size:12px}
+  .intro-schritte{gap:6px}
+  .ischritt{padding:8px 12px;gap:10px}
+  .ischritt b{font-size:13px}
+  .ischritt span{font-size:11.5px;line-height:1.45}
+  .is-ic{font-size:17px;width:22px}
+  .intro-fuss{margin-top:12px;font-size:11.5px}
+  #modal-root{padding:12px}
+  .modal{padding:20px}
+}

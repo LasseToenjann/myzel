@@ -244,7 +244,7 @@ const UI = (() => {
           <div class="legend" id="legend"></div>
           <button class="btn sm" id="respec">Skillbaum zurücksetzen</button>
         </div>
-        <div class="tree-hint">Ziehen zum Verschieben · Mausrad zum Zoomen · Knoten anklicken</div>
+        <div class="tree-hint">Ziehen zum Verschieben · zwei Finger oder Mausrad zum Zoomen · Knoten antippen</div>
       </div>`;
     const g = U.$('#tree-g');
     R.treeG = g; R.treeWrap = U.$('#treewrap');
@@ -348,6 +348,44 @@ const UI = (() => {
       e.preventDefault();
       zoomBy(e.deltaY < 0 ? 1.14 : 0.88, e.clientX, e.clientY);
     }, { passive: false });
+
+    /* Touch: zwei Finger zum Zoomen, Doppeltipp setzt die Ansicht zurueck.
+       Ohne das laesst sich der Baum auf Tablets nur ueber die kleinen
+       Plus/Minus-Knoepfe skalieren. */
+    let pinch = null;
+    const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const mid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+    R.treeWrap.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        drag = null;
+        R.treeWrap.classList.remove('dragging');
+        pinch = { d: dist(e.touches), z: view.z, m: mid(e.touches) };
+      }
+    }, { passive: true });
+    R.treeWrap.addEventListener('touchmove', e => {
+      if (pinch && e.touches.length === 2) {
+        e.preventDefault();
+        const f = dist(e.touches) / pinch.d;
+        const m = mid(e.touches);
+        const nz = U.clamp(pinch.z * f, 0.3, 2.4);
+        const k = nz / view.z;
+        view.x = m[0] - (m[0] - view.x) * k;
+        view.y = m[1] - (m[1] - view.y) * k;
+        view.z = nz;
+        applyView();
+      }
+    }, { passive: false });
+    const endPinch = e => { if (e.touches.length < 2) { pinch = null; dragged = true; setTimeout(() => { dragged = false; }, 60); } };
+    R.treeWrap.addEventListener('touchend', endPinch);
+    R.treeWrap.addEventListener('touchcancel', endPinch);
+
+    let lastTap = 0;
+    R.treeWrap.addEventListener('touchend', e => {
+      if (e.touches.length) return;
+      const now = Date.now();
+      if (now - lastTap < 320 && !e.target.closest('.tnode') && !e.target.closest('.tree-hud')) fitTree();
+      lastTap = now;
+    });
 
     fitTree();
   }

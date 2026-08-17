@@ -26,12 +26,12 @@ const LB = (() => {
      Kurze Feldnamen, weil alle Einträge zusammen in einem Textfeld liegen. */
   const pack = e => ({
     i: e.id, n: e.name, l: e.level, b: e.bio, s: e.sp, p: e.pres, d: e.date,
-    t: e.playTime, a: e.ach, k: e.nodes, m: e.biomes, r: e.rate, g: e.golds, c: e.chall
+    t: e.playTime, a: e.ach, k: e.nodes, m: e.biomes, r: e.rate, g: e.golds
   });
   const unpack = p => ({
     id: p.i, name: p.n, level: p.l || 0, bio: p.b || 0, sp: p.s || 0, pres: p.p || 0,
     date: p.d || 0, playTime: p.t || 0, ach: p.a || 0, nodes: p.k || 0,
-    biomes: p.m || 0, rate: p.r || 0, golds: p.g || 0, chall: p.c || 0
+    biomes: p.m || 0, rate: p.r || 0, golds: p.g || 0
   });
 
   /** Reifegrad zählt zuerst, bei Gleichstand die gesamte Biomasse. */
@@ -90,8 +90,7 @@ const LB = (() => {
       nodes: E.nodeLevelSum(),
       biomes: S.biomes.length,
       rate: Math.round(S.stats.bestRate),
-      golds: S.stats.golds,
-      chall: E.challTierSum()
+      golds: S.stats.golds
     };
   }
 

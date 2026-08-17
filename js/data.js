@@ -1,7 +1,7 @@
 /* ============================================================
    MYZEL - data.js
    Alle Inhalte: Strukturen, Skillbaum, Mutationen, Biome,
-   Prüfungen, Erfolge, Ticker-Texte
+   Erfolge, Ticker-Texte
    ============================================================ */
 const D = (() => {
 
@@ -49,11 +49,13 @@ const D = (() => {
   /* ---------- Wegformen ----------
      Liefert die Pfadangaben fuer die Verbindung zweier Knoten. Mehrere
      Eintraege ergeben mehrere Linien (etwa die zwei Straenge der Symbiose). */
-  function wegForm(form, a, b) {
+  function wegForm(form, a, b, streu) {
     const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
     const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
     const nx = -(b.y - a.y) / d, ny = (b.x - a.x) / d;      // Normale
-    const geschwungen = (v) => `M${a.x} ${a.y} Q${mx + nx * v} ${my + ny * v} ${b.x} ${b.y}`;
+    // streu (0..1) variiert die Kruemmung, damit nicht jeder Weg gleich aussieht
+    const f = 0.7 + (streu === undefined ? 0.5 : streu) * 0.8;
+    const geschwungen = (v) => `M${a.x} ${a.y} Q${mx + nx * v * f} ${my + ny * v * f} ${b.x} ${b.y}`;
 
     switch (form) {
       // Wachstum: eine organisch geschwungene Ader
@@ -321,9 +323,9 @@ const D = (() => {
     N('t_wurzel', 'tiefe', 2, 0, '⟱', 'Tiefe Wurzeln', 5, 9, 1.80,
       lv => `Sporen-Exponent +${(0.003 * lv).toFixed(3)} (sehr stark im späten Spiel).`,
       (m, lv) => { m.sporeExp += 0.003 * lv; }),
-    N('t_pruef', 'tiefe', 3, -1, '⚔', 'Prüfungen', 1, 13, 1,
-      () => `Schaltet den Reiter <b>Prüfungen</b> frei: freiwillige Handicaps mit dauerhaften Belohnungen.`,
-      () => {}),
+    N('t_grabung', 'tiefe', 3, -1, '⛏', 'Grabungen', 10, 13, 1.45,
+      lv => `Gesamte Produktion ${U.fmtPct(0.08 * lv)}.`,
+      (m, lv) => { m.global *= 1 + 0.08 * lv; }),
     N('t_genom', 'tiefe', 3, 1, '🧬', 'Genomkarte', 8, 17, 1.45,
       lv => `Mutationen kosten ${U.fmtPct(-(1 - Math.pow(0.92, lv)))} weniger Sporen.`,
       (m, lv) => { m.mutCost *= Math.pow(0.92, lv); }, { req: 't_wurzel' }),
@@ -398,9 +400,9 @@ const D = (() => {
     a_s6: 'a_s4', a_s7: 'a_s5',
     a_gold: 'a_s6', a_pres: 'a_s7', a_takt: 'a_gold',
 
-    // Tiefe: Prüfungen und Genomkarte als Gabelung
-    t_pruef: 't_wurzel', t_genom: 't_wurzel',
-    t_erinner: 't_pruef', t_welt: 't_genom',
+    // Tiefe: Grabungen und Genomkarte als Gabelung
+    t_grabung: 't_wurzel', t_genom: 't_wurzel',
+    t_erinner: 't_grabung', t_welt: 't_genom',
     t_xp: 't_erinner', t_sym: 't_welt',
     t_wp: 't_xp', t_sporen2: 't_sym',
     t_wurzel2: 't_sporen2', t_kern: 't_wurzel2'
@@ -613,9 +615,6 @@ const D = (() => {
     M('mu_netz', '🕸', 'Netzverdichtung', 6, 120, 3.4,
       lv => `${U.fmtPct(0.02 * lv)} Produktion pro gekaufter Skill-Stufe.`,
       (m, lv, c) => { m.global *= 1 + 0.02 * lv * c.nodeLevels; }),
-    M('mu_meister', '⚔', 'Prüfungsmeister', 3, 3000, 4.0,
-      lv => `Alle Prüfungs-Belohnungen wirken ×${U.fmt(Math.pow(1.6, lv))}.`,
-      (m, lv) => { m.challMult *= Math.pow(1.6, lv); }),
     M('mu_auto', '🔁', 'Sporen-Instinkt', 1, 2500, 1,
       () => `Schaltet den automatischen Sporenflug frei.`,
       (m) => { m.autoPrestige = true; }),
@@ -623,6 +622,36 @@ const D = (() => {
       lv => `Sporen-Exponent +${(0.002 * lv).toFixed(3)}.`,
       (m, lv) => { m.sporeExp += 0.002 * lv; })
   ];
+  /* Drei Gruppen, damit die Übersicht nicht aus achtzehn gleich aussehenden
+     Karten besteht: Was die Produktion steigert, was den nächsten Sporenflug
+     betrifft, und was das Spielen bequemer macht. */
+  const MUT_GRUPPE = {
+    mu_teil: 'produktion',
+    mu_kappe: 'produktion',
+    mu_tief: 'produktion',
+    mu_zeit: 'produktion',
+    mu_rinde: 'produktion',
+    mu_netz: 'produktion',
+    mu_klick: 'produktion',
+    mu_kolonie: 'produktion',
+    mu_wind: 'sporen',
+    mu_ewig: 'sporen',
+    mu_erbe: 'sporen',
+    mu_speicher: 'sporen',
+    mu_auto: 'sporen',
+    mu_reif: 'komfort',
+    mu_schnitt: 'komfort',
+    mu_gedaecht: 'komfort',
+    mu_gold: 'komfort',
+    
+  };
+  const GRUPPEN_NAME = {
+    produktion: ['Mehr Produktion', 'Wirken sofort auf die laufende Biomasse.'],
+    sporen: ['Sporen und Neustart', 'Bringen den nächsten Sporenflug voran.'],
+    komfort: ['Bequemer spielen', 'Reifung, Kosten, Offline und goldene Sporen.']
+  };
+  MUTATIONS.forEach(m => { m.gruppe = MUT_GRUPPE[m.id] || 'komfort'; });
+
   const MUT_BY_ID = {};
   MUTATIONS.forEach(m => MUT_BY_ID[m.id] = m);
   function mutCost(mu, lv) { return Math.ceil(mu.cb * Math.pow(mu.cg, lv)); }
@@ -646,36 +675,6 @@ const D = (() => {
     { id: 'b_kosmos', ic: '✷', name: 'Sternenmoos', cost: 260, d: 'Das Netz verlässt den Boden. Gesamte Produktion ×100.',
       f: m => { m.global *= 100; } }
   ];
-
-  /* ================= PRÜFUNGEN ================= */
-  const CHALLENGES = [
-    { id: 'p_duerre', ic: '🔆', name: 'Dürre',
-      rule: 'Deine gesamte Produktion ist durch 1 000 geteilt.',
-      goals: [1e9, 5e13, 1e19],
-      rewardText: ['Produktion ×2', 'Produktion ×3 (statt ×2)', 'Produktion ×6 (statt ×3)'],
-      apply: (m, t) => { if (t > 0) m.global *= [1, 2, 3, 6][t]; },
-      restrict: m => { m.global /= 1000; } },
-    { id: 'p_kahl', ic: '🪓', name: 'Kahlschlag',
-      rule: 'Nur die ersten drei Strukturen produzieren etwas.',
-      goals: [1e8, 1e12, 1e17],
-      rewardText: ['Strukturen 1–4 ×3', 'Strukturen 1–4 ×6', 'Strukturen 1–4 ×15'],
-      apply: (m, t) => { const v = [1, 3, 6, 15][t]; for (let i = 0; i < 4; i++) m.struct[i] *= v; },
-      restrict: m => { for (let i = 3; i < 8; i++) m.struct[i] = 0; } },
-    { id: 'p_frost', ic: '🧊', name: 'Frost',
-      rule: 'Das Kostenwachstum aller Strukturen ist um 0,08 erhöht.',
-      goals: [1e10, 1e14, 1e19],
-      rewardText: ['Kostenwachstum −0,005', 'Kostenwachstum −0,010', 'Kostenwachstum −0,015'],
-      apply: (m, t) => { m.costScale += [0, 0.005, 0.010, 0.015][t]; },
-      restrict: m => { m.costScale -= 0.08; } },
-    { id: 'p_stille', ic: '🤫', name: 'Stille',
-      rule: 'Klicks geben nichts, Automatik-Klicks und Ruhewachstum sind aus.',
-      goals: [1e11, 1e15, 1e20],
-      rewardText: ['Offline-Effizienz +30 %', 'Offline-Effizienz +60 %', 'Offline-Effizienz +120 %'],
-      apply: (m, t) => { m.offlineEff += [0, 0.3, 0.6, 1.2][t]; },
-      restrict: m => { m.click = 0; m.clickPct = 0; m.autoClick = 0; m.idleMax = 0; } }
-  ];
-  const CHAL_BY_ID = {};
-  CHALLENGES.forEach(c => CHAL_BY_ID[c.id] = c);
 
   /* ================= ERFOLGE ================= */
   // f(S) -> bool
@@ -718,9 +717,10 @@ const D = (() => {
   A('offline1', 'Es wächst weiter', 'Sammle Offline-Biomasse ein.', s => s.stats.offlineRuns >= 1);
   A('auto1', 'Von selbst', 'Schalte den ersten Autokäufer frei.', s => !!s.nodes['a_s0']);
   A('all8', 'Vollständig', 'Besitze mindestens eine von jeder Struktur.', s => s.structs.every(v => v > 0));
-  A('chal1', 'Prüfling', 'Bestehe eine Prüfung.', s => E.challTierSum() >= 1);
-  A('chal6', 'Geprüft', 'Bestehe 6 Prüfungsstufen.', s => E.challTierSum() >= 6);
-  A('chal12', 'Unbeugsam', 'Bestehe alle Prüfungsstufen.', s => E.challTierSum() >= 12);
+  A('ms100', 'Meilenstein', 'Bringe eine Struktur auf 100 Stück.', s => s.structs.some(v => v >= 100));
+  A('breit', 'Breit aufgestellt', 'Besitze von jeder Struktur mindestens 25 Stück.',
+    s => s.structs.every(v => v >= 25));
+  A('lang', 'Langer Atem', 'Spiele insgesamt 24 Stunden.', s => s.playTime >= 86400);
   A('mut10', 'Genbastler', 'Kaufe 10 Mutationsstufen.', s => E.mutLevelSum() >= 10);
   A('mut50', 'Evolution', 'Kaufe 50 Mutationsstufen.', s => E.mutLevelSum() >= 50);
   A('kern', 'Der Kern', 'Erwecke den Kern des Netzes.', s => !!s.nodes['t_kern']);
@@ -787,6 +787,6 @@ const D = (() => {
   return {
     STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, wegForm, kopfForm, WEAVES,
     SEKTOR,
-    MUTATIONS, MUT_BY_ID, mutCost, BIOMES, CHALLENGES, CHAL_BY_ID, ACH, NEWS, BUFFS, BUFF_BY_ID
+    MUTATIONS, MUT_BY_ID, mutCost, GRUPPEN_NAME, BIOMES, ACH, NEWS, BUFFS, BUFF_BY_ID
   };
 })();

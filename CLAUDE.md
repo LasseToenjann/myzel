@@ -79,7 +79,9 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 1.4 — jeder Ast mit eigener Wege- und Knotenform, Kreis neu sortiert,
+Version 1.8 — ohne Prüfungen, Kern zeigt den Reifegrad, Optionen nur hinter dem
+Menü, Musik startet aus. Davor: Baum mit Nebel: sichtbar ist nur das Erreichbare, die Ansicht passt
+sich selbst ein, kein Zurücksetzen mehr. Davor: jeder Ast mit eigener Wege- und Knotenform, Kreis neu sortiert,
 keine Legende mehr. Davor: Ast-Segmente wachsen mit dem Ausbau sichtbar nach außen. Davor:
 drei Spielstand-Plätze mit Namenspflicht, automatischer Eintrag in die
 Bestenliste samt Detailansicht, live erzeugte Musik, Skillbaum mit eingefärbten

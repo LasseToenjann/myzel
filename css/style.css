@@ -128,20 +128,36 @@ h2.sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(
 .hint b{color:var(--txt)}
 
 /* ============ Netz / Strukturen ============ */
-.click-zone{display:flex;gap:18px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
-.big-click{position:relative;width:150px;height:150px;border-radius:50%;flex-shrink:0;
-  background:radial-gradient(circle at 35% 30%,rgba(120,240,190,.32),rgba(16,48,36,.9) 62%);
-  border:2px solid var(--acc);cursor:pointer;transition:transform .1s;
-  box-shadow:0 0 42px rgba(79,224,160,.28),inset 0 0 34px rgba(79,224,160,.14);
+.click-zone{display:flex;flex-direction:column;align-items:center;gap:16px;margin:6px 0 30px;
+  text-align:center}
+.orb-wrap{position:relative;width:220px;height:220px;display:flex;align-items:center;
+  justify-content:center;--reife:0}
+.orb-ring{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;
+  transform:rotate(-90deg)}
+.or-bg,.or-fill{fill:none;stroke-width:3}
+.or-bg{stroke:rgba(120,220,180,.12)}
+.or-fill{stroke:var(--lime);stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(166,232,92,.6));transition:stroke-dashoffset .4s ease}
+.or-hyphe{stroke:var(--acc);stroke-width:2;stroke-linecap:round;opacity:.7;
+  animation:hypheAuf .6s ease backwards}
+@keyframes hypheAuf{from{opacity:0;stroke-width:0}to{opacity:.7;stroke-width:2}}
+.big-click{position:relative;border-radius:50%;flex-shrink:0;
+  width:calc(132px + var(--reife) * 34px);height:calc(132px + var(--reife) * 34px);
+  background:radial-gradient(circle at 35% 30%,
+    rgba(120,240,190,calc(.26 + var(--reife) * .3)),rgba(16,48,36,.92) 62%);
+  border:2px solid var(--acc);cursor:pointer;
+  transition:transform .1s,width .8s ease,height .8s ease,box-shadow .8s ease;
+  box-shadow:0 0 calc(34px + var(--reife) * 42px) rgba(79,224,160,calc(.24 + var(--reife) * .3)),
+    inset 0 0 34px rgba(79,224,160,.14);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .big-click:hover{transform:scale(1.03)}
 .big-click:active{transform:scale(.95)}
-.big-click .bc-lbl{font-size:12px;letter-spacing:2px;color:var(--acc);text-transform:uppercase}
+.big-click .bc-lbl{font-size:11.5px;letter-spacing:2px;color:var(--acc);text-transform:uppercase}
 .big-click .bc-val{font-size:19px;font-weight:700}
-.big-click::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(79,224,160,.28);
-  animation:ring 3s ease-out infinite}
-@keyframes ring{0%{transform:scale(.94);opacity:.7}100%{transform:scale(1.18);opacity:0}}
-.click-info{color:var(--dim);font-size:13px;line-height:1.8;max-width:420px}
+.big-click::after{content:"";position:absolute;inset:-9px;border-radius:50%;
+  border:1px solid rgba(79,224,160,.26);animation:ring 3s ease-out infinite}
+@keyframes ring{0%{transform:scale(.94);opacity:.7}100%{transform:scale(1.2);opacity:0}}
+.click-info{color:var(--dim);font-size:13px;line-height:1.8;max-width:460px}
 .click-info b{color:var(--txt)}
 .pop{position:fixed;pointer-events:none;font-weight:700;font-size:16px;color:var(--lime);
   text-shadow:0 0 10px rgba(166,232,92,.8);animation:popUp 1s ease-out forwards;z-index:60}
@@ -220,14 +236,12 @@ h2.sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(
   backdrop-filter:blur(10px)}
 .wp-box .n{font-size:26px;font-weight:700;color:var(--lime);line-height:1}
 .wp-box .l{font-size:10.5px;color:var(--dim);letter-spacing:1.4px;text-transform:uppercase;margin-top:3px}
-.zoom-ctl{display:flex;gap:5px}
-.zoom-ctl button{width:32px;height:32px;border-radius:8px;background:var(--panel);
-  border:1px solid var(--line);font-size:15px;color:var(--dim);backdrop-filter:blur(8px)}
-.zoom-ctl button:hover{color:var(--acc);border-color:var(--acc)}
-.legend{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 13px;
-  backdrop-filter:blur(10px);font-size:11.5px;line-height:1.9}
-.legend div{display:flex;align-items:center;gap:8px;color:var(--dim)}
-.legend i{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+
+
+
+
+
 
 .node-panel{position:absolute;right:14px;top:14px;width:312px;max-height:calc(100% - 28px);background:var(--panel);
   border:1px solid var(--line-str);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px);
@@ -409,9 +423,7 @@ body.in-game #vignette{background:radial-gradient(ellipse at center,transparent 
   text-transform:uppercase;pointer-events:none}
 .tnode text.ic{font-size:17px}
 .tnode text.lvl{font-size:10.5px}
-.tree-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);color:var(--dim2);
-  font-size:11.5px;letter-spacing:.6px;background:var(--panel);padding:7px 15px;border-radius:20px;
-  border:1px solid var(--line);backdrop-filter:blur(8px);pointer-events:none;white-space:nowrap}
+
 
 /* ============ Aktive Buffs ============ */
 #buffbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -445,13 +457,13 @@ input[type=text]:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3
 
 /* ============ Skillbaum auf schmalen Bildschirmen ============ */
 @media(max-width:700px){
-  .legend{display:none}                 /* die Aeste sind im Baum selbst beschriftet */
-  .tree-hint{display:none}
+                   /* die Aeste sind im Baum selbst beschriftet */
+  
   .tree-hud{max-width:120px;gap:6px}
   .wp-box{padding:8px 11px}
   .wp-box .n{font-size:19px}
   .wp-box .l{font-size:9px;letter-spacing:1px}
-  .zoom-ctl button{width:28px;height:28px;font-size:13px}
+  
   #respec{font-size:10px;padding:5px 7px;line-height:1.3}
 }
 
@@ -472,7 +484,7 @@ input[type=text]:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3
   .card-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
   .node-panel{width:290px}
   .tree-hud{max-width:200px}
-  .legend{line-height:1.7;font-size:11px}
+  
 }
 
 /* ============ Skillbaum: Verwebungen und Schlüsselknoten ============ */
@@ -597,3 +609,38 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .tlink .lp.duenn{opacity:.5}
 .tlink.on .lp.duenn{opacity:.75}
 .branch-zweck{font-size:10px;text-anchor:middle;opacity:.5;letter-spacing:.4px;text-transform:none}
+
+/* ============ Skillbaum: clean statt schwarze Blöcke ============ */
+/* Ungekaufte Knoten sind nur eine Kontur, gekaufte sind gefüllt. Der
+   schwarze Vollkörper wirkte bei eckigen Formen wie ein Klotz. */
+.tnode .bg{fill:rgba(10,20,16,.55);stroke-width:2;transition:fill .25s,stroke-width .15s}
+.tnode.locked .bg{fill:none;stroke:rgba(120,140,130,.28)}
+.tnode.avail .bg{fill:rgba(10,22,17,.5);stroke:var(--nc)}
+.tnode.owned .bg,.tnode.maxed .bg{fill:var(--nc);stroke:var(--nc)}
+.tnode.maxed .bg{stroke:#eafff5;stroke-width:2.4}
+.tnode:hover .bg{stroke-width:3.4}
+.tnode.sel .bg{stroke:#fff;stroke-width:3}
+/* Was noch nicht erreichbar ist, wird gar nicht erst gezeigt */
+.tnode.verborgen,.tlink.verborgen{display:none}
+.tnode.can .bg{animation:nodeReady 2.4s ease-in-out infinite}
+@keyframes nodeReady{
+  0%,100%{filter:drop-shadow(0 0 3px var(--nc))}
+  50%{filter:drop-shadow(0 0 15px var(--nc))}
+}
+/* frisch erreichbar: kurz aufblenden */
+.tnode.neu{animation:nodeAuf .7s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes nodeAuf{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+
+/* ============ Mutationen: nach Wirkung gruppiert ============ */
+.mut-gruppe{margin:22px 0 11px}
+.mut-gruppe:first-child{margin-top:0}
+.mg-titel{font-size:14px;font-weight:700;letter-spacing:.4px}
+.mg-was{font-size:12px;color:var(--dim);margin-top:2px}
+.card.mut{padding:13px 15px}
+.card.mut h4{font-size:14px;margin-bottom:6px;padding-right:0;gap:6px;align-items:baseline}
+.card.mut .lvl{margin-left:auto;font-size:11px;color:var(--dim2);letter-spacing:0}
+.card.mut p{margin:0 0 11px;min-height:32px;font-size:12px}
+.card.mut .cbtn{margin-top:0;display:flex;align-items:center;justify-content:center;gap:8px}
+.card.mut .cbtn b{color:var(--gold);font-weight:700}
+.card.mut.can .cbtn b{color:#1a1400}
+.card.mut.maxed::after{top:11px;right:13px}

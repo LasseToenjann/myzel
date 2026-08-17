@@ -39,7 +39,7 @@ du tust, du gehst immer vorwärts.
 | 3 | **Skillbaum**: 72 Knoten, 6 Äste, radial, permanent | das Herzstück |
 | 4 | **Sporenflug** (Prestige) → Sporen → 18 Mutationen | der erste große Schnitt |
 | 5 | **Symbiose** (Meta-Prestige) → 8 Biome | öffnet gesperrte Ringe im Baum |
-| — | Prüfungen, 59 Erfolge, Autokäufer, Offline-Wachstum | Nebenziele und Komfort |
+| — | 59 Erfolge, Autokäufer, Offline-Wachstum, goldene Sporen | Nebenziele und Komfort |
 
 Der Skillbaum ist als radialer Baum angelegt: Jeder Ast belegt ein eingefärbtes
 Kreissegment, gabelt sich einmal und führt beide Zweige nach außen. Das Segment

@@ -191,15 +191,6 @@ const Game = (() => {
     } else go();
   }
 
-  function enterChall(id) {
-    const ch = D.CHAL_BY_ID[id];
-    confirmBox(`${ch.ic} ${ch.name} antreten?`,
-      `Dein aktueller Durchlauf wird zurückgesetzt (ohne Sporen-Gewinn).<br><br>
-       <b>Handicap:</b> ${ch.rule}<br><b>Ziel:</b> ${U.fmt(E.challGoal(id))} Biomasse im Durchlauf.<br>
-       Du kannst jederzeit abbrechen.`,
-      () => { E.enterChall(id); FX.sfx.unlock(); UI.show('netz'); UI.refreshAll(); }, 'Antreten');
-  }
-
   /** Sicherung einspielen - als Datei oder als Text. */
   function ladeSicherung() {
     modal(`<h3>Sicherung laden</h3>
@@ -271,7 +262,6 @@ const Game = (() => {
               ${detail('Biome', e.biomes + ' / 8')}
               ${detail('Skill-Stufen', U.fmtInt(e.nodes))}
               ${detail('Erfolge', e.ach + ' / 59')}
-              ${detail('Prüfungsstufen', e.chall + ' / 12')}
               ${detail('Goldene Sporen', U.fmtInt(e.golds))}
               ${detail('Spielzeit', U.fmtTimeShort(e.playTime))}
               ${detail('Zuletzt aktiv', zeit)}
@@ -300,9 +290,6 @@ const Game = (() => {
       } else if (ev.t === 'struct') {
         FX.sfx.unlock();
         FX.toast('Neue Struktur', `${D.STRUCTS[ev.i].ic} ${D.STRUCTS[ev.i].name} — ${D.STRUCTS[ev.i].desc}`, 'lime', 6000);
-      } else if (ev.t === 'chall') {
-        FX.sfx.ach(); FX.flash();
-        FX.toast('Prüfung bestanden', `${ev.ch.name} Stufe ${ev.tier}: ${ev.ch.rewardText[ev.tier - 1]}`, 'gold', 7000);
       } else if (ev.t === 'autopres') {
         FX.resetNet();
         FX.toast('Sporenflug (automatisch)', `+${U.fmtInt(ev.v)} Sporen`, 'gold');
@@ -370,7 +357,7 @@ const Game = (() => {
     document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });
   }
 
-  return { boot, enter, afterLoad, prestige, symbiose, enterChall, showLeaderboard, ladeSicherung, confirm: confirmBox, modal, close };
+  return { boot, enter, afterLoad, prestige, symbiose, showLeaderboard, ladeSicherung, confirm: confirmBox, modal, close };
 })();
 
 window.addEventListener('DOMContentLoaded', Game.boot);

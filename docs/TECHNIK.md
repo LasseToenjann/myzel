@@ -51,7 +51,7 @@ Gespielt wird auf kleinen Bildschirmen; der Desktop ist die Zugabe.
 | Datei | Zuständig für |
 |---|---|
 | `js/util.js` | Zahlformatierung (deutsche lange Leiter: Mio, Mrd, Bio, Brd …), DOM-Helfer, geometrische Reihen für Massenkäufe, Speicher-Kodierung |
-| `js/data.js` | **alle Inhalte**: 8 Strukturen, 72 Skillknoten, 18 Mutationen, 8 Biome, 4 Prüfungen, 59 Erfolge, Ticker-Texte, goldene Sporen |
+| `js/data.js` | **alle Inhalte**: 8 Strukturen, 72 Skillknoten, 17 Mutationen, 8 Biome, 59 Erfolge, Ticker-Texte, goldene Sporen |
 | `js/state.js` | Spielstand anlegen, speichern, laden, migrieren |
 | `js/engine.js` | der gesamte Rechenweg, Käufe, Prestige, Erfolge, Offline |
 | `js/fx.js` | wachsendes Hintergrund-Myzel, Partikel, Toasts, Klänge, goldene Sporen |
@@ -85,8 +85,8 @@ gehören immer nur in `fresh()`** — dann laufen alte Spielstände ohne Migrati
 bewusst gewählt:
 
 1. Skillbaum · 2. Mutationen · 3. Biome · 4. Erfolge (×1,02 je Stück) ·
-5. Sporen (Lebenszeit) · 6. Symbiose-Punkte (Lebenszeit) · 7. Prüfungsbelohnungen ·
-8. laufende goldene Sporen · 9. Ruhewachstum · 10. Einschränkung einer laufenden Prüfung
+5. Sporen (Lebenszeit) · 6. Symbiose-Punkte (Lebenszeit) ·
+7. laufende goldene Sporen · 8. Ruhewachstum
 
 Danach greift der **weiche Deckel**, dann wird die Produktion je Struktur berechnet:
 
@@ -139,6 +139,12 @@ Hintergrund (radialer Verlauf, nach außen auslaufend). Die Beschriftung nennt N
 **Zweck** in Klartext und die Zahl der gekauften Stufen. Eine Legende gibt es
 bewusst nicht — die Information gehört an den Ast selbst, nicht in eine Tabelle
 daneben.
+
+**Nebel.** `sichtbar(id)` entscheidet, was gezeichnet wird: gekaufte Knoten, die
+ersten Knoten eines Astes und direkte Kinder gekaufter Knoten. Alles andere bekommt
+`display:none`. Dadurch baut sich der Baum sichtbar auf. `fitTree()` rechnet den
+Rahmen aus genau diesen Knoten und passt die Ansicht ein — der Baum zoomt mit jedem
+Fortschritt automatisch etwas heraus. Einen Zurücksetzen-Knopf gibt es bewusst nicht.
 
 **Wachsende Segmente**: Das Segment eines Astes reicht nur so weit nach außen, wie
 dieser Ast ausgebaut ist (`D.branchInfo()` liefert Stufen, Maximum und den Radius des
@@ -224,14 +230,16 @@ Live erzeugt statt aus einer Datei — eine Aufnahme wären mehrere Megabyte, di
 zudem hörbar in Schleife liefen. Aufbau in `js/music.js`:
 
 - drei Dauerstimmen (je zwei leicht verstimmte Schwingungen, das ergibt eine
-  Schwebung) durch ein Tiefpassfilter bei 700 Hz
-- ein sehr langsamer Oszillator (0,033 Hz) bewegt die Filterfrequenz, damit der
+  Schwebung) durch ein Tiefpassfilter bei 1500 Hz
+- ein langsamer Oszillator (0,07 Hz) bewegt die Filterfrequenz, damit der
   Klang nicht steht
-- eine Akkordfolge aus sechs Stufen wechselt alle 15–22 Sekunden weich
-- darüber einzelne Tropfentöne aus der A-Moll-Pentatonik alle 3,5–10 Sekunden
-- ein Echo (0,42 s, Rückführung 0,34) ersetzt einen Hall
+- eine dur-gefärbte Akkordfolge aus sechs Stufen wechselt alle 7,5–12 Sekunden weich
+- darüber einzelne Tropfentöne aus der C-Dur-Pentatonik alle 1,8–4,8 Sekunden
+- ein Echo (0,33 s, Rückführung 0,34) ersetzt einen Hall
 
 Kein Halbtonschritt im Tonvorrat, dadurch klingt nichts spannungsgeladen. Die
+erste Fassung lag eine Oktave tiefer und in Moll — das wirkte düster und schwer
+für ein Spiel, das leicht sein soll. Die
 Lautstärke wird quadriert, weil das dem Höreindruck besser entspricht.
 
 Gestartet wird erst beim Eintritt ins Spiel — vorher verbieten Browser das Abspielen

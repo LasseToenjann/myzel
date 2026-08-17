@@ -32,8 +32,6 @@ const Save = (() => {
       biomes: [],
       prestiges: 0,
       symResets: 0,
-      chall: {},
-      activeChall: null,
       ach: [],
       buffs: [],
       autoBuy: [true, true, true, true, true, true, true, true],
@@ -48,7 +46,7 @@ const Save = (() => {
       seenTabs: [],
       stats: { clicks: 0, golds: 0, offlineRuns: 0, maxIdle: 0, bestSpores: 0, bestRate: 0, started: Date.now(), fastest: 0 },
       opt: { sound: true, notation: 'kurz', particles: true, offline: true, ticker: true,
-        confirmPrestige: true, autoBoard: true, music: true, musicVol: 0.5 }
+        confirmPrestige: true, autoBoard: true, music: false, musicVol: 0.5, sfxVol: 0.6 }
     };
   }
 

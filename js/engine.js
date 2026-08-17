@@ -26,15 +26,13 @@ const E = (() => {
       auto: [false, false, false, false, false, false, false, false],
       autoPrestige: false, autoRate: 1,
       bulk: 1, mutCost: 1, wpBonus: 0,
-      buffChance: 1, buffMult: 1,
-      challMult: 1
+      buffChance: 1, buffMult: 1
     };
   }
 
   /* ---------- Hilfszähler ---------- */
   function nodeLevelSum() { let t = 0; for (const k in S.nodes) t += S.nodes[k]; return t; }
   function mutLevelSum() { let t = 0; for (const k in S.muts) t += S.muts[k]; return t; }
-  function challTierSum() { let t = 0; for (const k in S.chall) t += S.chall[k]; return t; }
   function structsTotal() { return S.structs.reduce((a, b) => a + b, 0); }
   function unlockedCount() { let c = 0; for (let i = 0; i < 8; i++) if (isUnlocked(i)) c++; return c; }
 
@@ -90,23 +88,6 @@ const E = (() => {
     if (S.sporeLife > 0) m.global *= sporeMult(S.sporeLife);
     // 6) Symbiose-Punkte (Lebenszeit)
     if (S.spLife > 0) m.global *= 1 + 0.6 * Math.pow(Math.log10(1 + S.spLife), 2.6);
-    // 7) Prüfungs-Belohnungen
-    D.CHALLENGES.forEach(ch => {
-      const t = S.chall[ch.id] || 0;
-      if (t > 0) {
-        const before = { global: m.global, costScale: m.costScale, offlineEff: m.offlineEff, struct: m.struct.slice() };
-        ch.apply(m, t);
-        // Prüfungsmeister verstärkt den Zugewinn
-        if (m.challMult !== 1) {
-          m.global = before.global * Math.pow(m.global / before.global, m.challMult);
-          m.costScale = before.costScale + (m.costScale - before.costScale) * m.challMult;
-          m.offlineEff = before.offlineEff + (m.offlineEff - before.offlineEff) * m.challMult;
-          for (let i = 0; i < 8; i++) {
-            if (before.struct[i] > 0) m.struct[i] = before.struct[i] * Math.pow(m.struct[i] / before.struct[i], m.challMult);
-          }
-        }
-      }
-    });
     // 8) Aktive Buffs (goldene Sporen)
     S.buffs = S.buffs.filter(b => b.until > now);
     S.buffs.forEach(b => {
@@ -115,12 +96,6 @@ const E = (() => {
     });
     // 9) Ruhewachstum
     if (m.idleMax > 0) m.global *= 1 + m.idleMax * Math.min(1, S.idleTime / 90);
-    // 10) Aktive Prüfung schränkt ein
-    if (S.activeChall) {
-      const ch = D.CHAL_BY_ID[S.activeChall];
-      if (ch) ch.restrict(m);
-    }
-
     // Weicher Deckel: oberhalb der Schwelle waechst der Gesamtmultiplikator
     // nur noch gedaempft. Ohne ihn schaukeln sich Produktion, Sporen und
     // Symbiose gegenseitig innerhalb weniger Stunden ins Unendliche.
@@ -313,7 +288,7 @@ const E = (() => {
     if (sporeGain() >= 1) return 1;
     return U.clamp(Math.log10(Math.max(1, S.runTotal)) / 9, 0, 1);
   }
-  function canPrestige() { return !S.activeChall && sporeGain() >= 1; }
+  function canPrestige() { return sporeGain() >= 1; }
 
   function softReset(keepStructures) {
     const keep = keepStructures ? m.keepPct : 0;
@@ -350,7 +325,7 @@ const E = (() => {
     if (base < 1) return 0;
     return Math.floor(Math.pow(base, 0.25));
   }
-  function canSym() { return !S.activeChall && spGain() >= 1; }
+  function canSym() { return spGain() >= 1; }
   function doSym() {
     if (!canSym()) return 0;
     const g = spGain();
@@ -374,29 +349,6 @@ const E = (() => {
     S.biomes.push(id);
     recalc();
     return true;
-  }
-
-  /* ---------- Prüfungen ---------- */
-  function challUnlocked() { return !!S.nodes['t_pruef']; }
-  function enterChall(id) {
-    if (!challUnlocked() || S.activeChall) return false;
-    const ch = D.CHAL_BY_ID[id]; if (!ch) return false;
-    if ((S.chall[id] || 0) >= ch.goals.length) return false;
-    softReset(false);
-    S.activeChall = id;
-    recalc();
-    return true;
-  }
-  function leaveChall(completed) {
-    S.activeChall = null;
-    softReset(false);
-    recalc();
-    return completed;
-  }
-  function challGoal(id) {
-    const ch = D.CHAL_BY_ID[id];
-    const t = S.chall[id] || 0;
-    return t >= ch.goals.length ? Infinity : ch.goals[t];
   }
 
   /* ---------- Erfolge ---------- */
@@ -477,21 +429,8 @@ const E = (() => {
     S.idleTime += dt;
     if (S.idleTime > S.stats.maxIdle) S.stats.maxIdle = S.idleTime;
 
-    // Prüfung geschafft?
-    if (S.activeChall) {
-      const goal = challGoal(S.activeChall);
-      if (S.runTotal >= goal) {
-        const id = S.activeChall;
-        const ch = D.CHAL_BY_ID[id];
-        const t = (S.chall[id] || 0) + 1;
-        S.chall[id] = t;
-        leaveChall(true);
-        events.push({ t: 'chall', ch, tier: t });
-      }
-    }
-
     // Auto-Sporenflug
-    if (m.autoPrestige && S.autoPrestigeOn && !S.activeChall && sporeGain() >= S.autoPrestigeAt) {
+    if (m.autoPrestige && S.autoPrestigeOn && sporeGain() >= S.autoPrestigeAt) {
       const g = doPrestige();
       if (g > 0) events.push({ t: 'autopres', v: g });
     }
@@ -573,9 +512,8 @@ const E = (() => {
     nodeState, gateReason, buyNode, respec, mutState, buyMut,
     sporeGain, sporeProgress, canPrestige, doPrestige,
     symUnlocked, spGain, canSym, doSym, buyBiome,
-    challUnlocked, enterChall, leaveChall, challGoal,
     checkAch, catchGold, offlineGain, applyOffline, nextGoal, timeToAfford, sporeMult,
     get softcap() { return { at: SOFTCAP, pow: SOFTCAP_POW }; },
-    nodeLevelSum, mutLevelSum, challTierSum, structsTotal
+    nodeLevelSum, mutLevelSum, structsTotal
   };
 })();

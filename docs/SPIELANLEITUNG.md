@@ -28,7 +28,9 @@ dran ist, schaut dorthin.
 
 ## Die Reiter
 
-**Netz** — Hier wird geklickt und gekauft. Acht Strukturen schalten sich nach und
+**Netz** — Hier wird geklickt und gekauft. Der Kern in der Mitte zeigt deinen Stand:
+Der Ring füllt sich bis zum nächsten Reifegrad, und alle fünf Reifegrade wächst eine
+weitere Hyphe aus ihm heraus. Acht Strukturen schalten sich nach und
 nach frei, von der Hyphe bis zum Weltmyzel. Jede 25. Struktur einer Art
 **verdoppelt** deren Produktion; der schmale gelbe Balken zeigt, wie weit es bis
 zum nächsten Meilenstein ist.
@@ -48,9 +50,6 @@ gesammelten Sporen bleibt beim Kaufen erhalten.
 „Symbiose-Zugang". Sporen und Mutationen gehen dabei verloren, dafür erschließt du
 **Biome**: dauerhafte Boni, die zusätzlich die äußeren Ringe im Skillbaum öffnen.
 
-**Prüfungen** — Freiwillige Handicaps mit dauerhafter Belohnung. Eine Prüfung setzt
-den laufenden Durchlauf zurück; abbrechen geht jederzeit.
-
 **Erfolge** — 59 Stück, jeder gibt dauerhaft **+2 %** Produktion.
 
 ## Die sechs Äste
@@ -62,7 +61,7 @@ den laufenden Durchlauf zurück; abbrechen geht jederzeit.
 | ⚭ **Symbiose** | Boni, die mit deinem eigenen Fortschritt wachsen |
 | ☾ **Zersetzung** | Offline-Wachstum und Ruhewachstum |
 | ⟳ **Automatik** | Autokäufer, Auto-Klick, automatischer Sporenflug |
-| ◈ **Tiefe** | Sporen, Prüfungen, neue Schichten |
+| ◈ **Tiefe** | Sporen und neue Schichten |
 
 ## Dinge, die man leicht übersieht
 
@@ -79,7 +78,8 @@ den laufenden Durchlauf zurück; abbrechen geht jederzeit.
 - Ein Knoten, der **gesperrt** ist, sagt auch warum. Sporen-Boni etwa gibt es erst
   nach dem ersten Sporenflug — vorher würden sie ins Leere gehen.
 - **Musik**: ein ruhiger Klangteppich, der laufend neu entsteht und sich nie
-  wiederholt. Über das ♫ oben rechts oder mit Regler in den Optionen.
+  wiederholt. Standardmäßig aus — einschalten über das ♫ oben rechts.
+- Die **Optionen** liegen hinter den drei Strichen oben rechts.
 
 ## Tasten
 

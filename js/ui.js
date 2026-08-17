@@ -9,10 +9,9 @@ const UI = (() => {
     { id: 'baum', name: 'Skillbaum', vis: () => true },
     { id: 'sporen', name: 'Sporen', vis: () => S.sporeLife > 0 || S.prestiges > 0 || S.lifetime >= 1e8 },
     { id: 'symbiose', name: 'Symbiose', vis: () => E.symUnlocked() },
-    { id: 'pruefung', name: 'Prüfungen', vis: () => E.challUnlocked() },
     { id: 'erfolge', name: 'Erfolge', vis: () => true },
     { id: 'statistik', name: 'Statistik', vis: () => S.playTime > 120 },
-    { id: 'optionen', name: 'Optionen', vis: () => true }
+    { id: 'optionen', name: 'Optionen', vis: () => false }   // nur über das Menü oben rechts
   ];
 
   /* Schreibt nur, wenn sich der Inhalt geaendert hat. Ohne das wuerden
@@ -53,7 +52,8 @@ const UI = (() => {
 
   function show(id) {
     const t = TABS.find(x => x.id === id);
-    if (!t || !t.vis()) return;
+    if (!t) return;
+    if (!t.vis() && id !== 'optionen') return;   // Optionen liegen hinter dem Menü
     active = id;
     if (!S.seenTabs.includes(id)) S.seenTabs.push(id);
     const dot = t.el.querySelector('.dot'); if (dot) dot.remove();
@@ -61,14 +61,14 @@ const UI = (() => {
     U.$$('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === id));
     if (!built[id]) { build(id); built[id] = true; }
     refreshTab(true);
-    if (id === 'baum') fitTree();
+    if (id === 'baum') { refreshTree(); fitTree(); }
   }
 
   function panel(id) { return U.$(`.tab-panel[data-tab="${id}"]`); }
 
   function build(id) {
     ({ netz: buildNetz, baum: buildBaum, sporen: buildSporen, symbiose: buildSym,
-       pruefung: buildPruef, erfolge: buildErfolge, statistik: buildStat, optionen: buildOpt }[id] || (() => {}))();
+       erfolge: buildErfolge, statistik: buildStat, optionen: buildOpt }[id] || (() => {}))();
   }
 
   /* ================= REITER: NETZ ================= */
@@ -77,10 +77,17 @@ const UI = (() => {
     p.innerHTML = `
       <div class="goalbar" id="goalbar"></div>
       <div class="click-zone">
-        <button class="big-click" id="bigclick">
-          <span class="bc-lbl">Nähren</span>
-          <span class="bc-val" id="bc-val">+1</span>
-        </button>
+        <div class="orb-wrap" id="orb-wrap">
+          <svg class="orb-ring" viewBox="-110 -110 220 220" aria-hidden="true">
+            <g id="orb-hyphen"></g>
+            <circle class="or-bg" r="92"></circle>
+            <circle class="or-fill" id="or-fill" r="92"></circle>
+          </svg>
+          <button class="big-click" id="bigclick">
+            <span class="bc-lbl">Nähren</span>
+            <span class="bc-val" id="bc-val">+1</span>
+          </button>
+        </div>
         <div class="click-info">
           <div id="ci-rate"></div>
           <div id="ci-idle" class="ci-idle"></div>
@@ -180,6 +187,48 @@ const UI = (() => {
     setTimeout(() => { R.ticker.textContent = D.NEWS[i]; R.ticker.style.opacity = 1; }, 400);
   }
 
+  /* Der Kern zeigt den Fortschritt: Der Ring fuellt sich bis zum naechsten
+     Reifegrad, der Orb wird groesser und heller, und alle fuenf Reifegrade
+     waechst eine weitere Hyphe aus ihm heraus. */
+  const ORB_UMFANG = 2 * Math.PI * 92;
+  let orbHyphen = -1;
+
+  function orbAktualisieren() {
+    const fill = U.$('#or-fill');
+    if (!fill) return;
+    const p = E.levelProgress();
+    const off = (ORB_UMFANG * (1 - p)).toFixed(1);
+    if (fill.getAttribute('stroke-dashoffset') !== off) {
+      fill.setAttribute('stroke-dasharray', ORB_UMFANG.toFixed(1));
+      fill.setAttribute('stroke-dashoffset', off);
+    }
+    // Groesse und Leuchtkraft steigen mit dem Reifegrad, aber gedeckelt
+    const reife = U.clamp(S.level / 60, 0, 1);
+    const wrap = U.$('#orb-wrap');
+    if (wrap && wrap.dataset.reife !== reife.toFixed(2)) {
+      wrap.dataset.reife = reife.toFixed(2);
+      wrap.style.setProperty('--reife', reife.toFixed(3));
+    }
+    // Hyphen: eine je fuenf Reifegrade, hoechstens sechzehn
+    const anzahl = Math.min(16, Math.floor(S.level / 5));
+    if (anzahl !== orbHyphen) {
+      orbHyphen = anzahl;
+      const g = U.$('#orb-hyphen');
+      g.innerHTML = '';
+      for (let i = 0; i < anzahl; i++) {
+        const a = (i / anzahl) * Math.PI * 2 - Math.PI / 2;
+        const r1 = 94, r2 = 104 + (i % 3) * 5;
+        const l = U.svgEl('line', {
+          x1: (Math.cos(a) * r1).toFixed(1), y1: (Math.sin(a) * r1).toFixed(1),
+          x2: (Math.cos(a) * r2).toFixed(1), y2: (Math.sin(a) * r2).toFixed(1),
+          class: 'or-hyphe'
+        });
+        l.style.animationDelay = (i * 0.09).toFixed(2) + 's';
+        g.appendChild(l);
+      }
+    }
+  }
+
   function refreshNetz() {
     if (!built.netz) return;
     const g = E.nextGoal();
@@ -191,6 +240,7 @@ const UI = (() => {
     setW(R.goalBar, g.p * 100);
 
     setText(U.$('#bc-val'), '+' + U.fmt(E.clickGain));
+    orbAktualisieren();
     const idlePct = E.m.idleMax * Math.min(1, S.idleTime / 90);
     setHTML(U.$('#ci-rate'), `Ein Klick gibt <b>${U.fmt(E.clickGain)}</b> Biomasse.<br>
       Das Netz erzeugt <b>${U.fmt(E.total)}</b> pro Sekunde.` +
@@ -233,6 +283,7 @@ const UI = (() => {
   const weaveEls = [];
   const segEls = {};
   const tagEls = {};
+  const tagGrp = {};
 
   function buildBaum() {
     const p = panel('baum');
@@ -241,12 +292,7 @@ const UI = (() => {
         <svg id="tree-svg"><g id="tree-g"></g></svg>
         <div class="tree-hud">
           <div class="wp-box"><div class="n" id="wp-n">0</div><div class="l">Wachstumspunkte</div></div>
-          <div class="zoom-ctl">
-            <button id="z-in">+</button><button id="z-out">−</button><button id="z-fit">⌂</button>
-          </div>
-          <button class="btn sm" id="respec">Skillbaum zurücksetzen</button>
         </div>
-        <div class="tree-hint">Ziehen zum Verschieben · zwei Finger oder Mausrad zum Zoomen · Knoten antippen</div>
       </div>`;
     const g = U.$('#tree-g');
     R.treeG = g; R.treeWrap = U.$('#treewrap');
@@ -302,6 +348,7 @@ const UI = (() => {
       gr.appendChild(z);
       g.appendChild(gr);
       tagEls[k] = z;
+      tagGrp[k] = gr;
     }
 
     /* Verbindungen: jeder Ast hat seine eigene Wegform - eine geschwungene
@@ -312,7 +359,7 @@ const UI = (() => {
       if (!n.req) return;
       const br = D.BRANCHES[n.b];
       const a = D.nodePos(D.NODE_BY_ID[n.req]), b = D.nodePos(n);
-      const teile = D.wegForm(br.form, a, b);
+      const teile = D.wegForm(br.form, a, b, (n.id.charCodeAt(2) % 7) / 7);
       const gruppe = U.svgEl('g', { class: 'tlink off' });
       gruppe.style.setProperty('--lc', br.col);
       teile.forEach(t => {
@@ -345,8 +392,6 @@ const UI = (() => {
     core.appendChild(U.svgEl('circle', { r: 13, fill: 'rgba(79,224,160,.9)' }));
     const ct = U.svgEl('text', { class: 'ic', y: 1, 'font-size': 15, fill: '#04140d' });
     ct.textContent = '\u274b'; core.appendChild(ct);
-    const cl = U.svgEl('text', { class: 'lvl', y: 52, fill: '#7fa093' });
-    cl.textContent = 'URSPRUNG'; core.appendChild(cl);
     g.appendChild(core);
 
     // Verbindung Kern -> erste Knoten, ebenfalls in der Form des Astes
@@ -385,13 +430,6 @@ const UI = (() => {
 
 
     // Steuerung
-    U.$('#respec').onclick = () => Game.confirm('Skillbaum zurücksetzen?',
-      'Alle Wachstumspunkte werden frei und du kannst sie neu verteilen. Nichts geht dabei verloren.',
-      () => { E.respec(); closePanel(); refreshTree(); refreshTop(); FX.toast('Skillbaum geleert', 'Alle Punkte sind wieder frei.', 'lime'); },
-      'Punkte freigeben');
-    U.$('#z-in').onclick = () => zoomBy(1.25);
-    U.$('#z-out').onclick = () => zoomBy(0.8);
-    U.$('#z-fit').onclick = fitTree;
     let drag = null;
     R.treeWrap.addEventListener('pointerdown', e => {
       if (e.target.closest('.node-panel') || e.target.closest('.tree-hud')) return;
@@ -484,23 +522,27 @@ const UI = (() => {
     view.z = nz;
     applyView();
   }
+  /** Passt die Ansicht so ein, dass alles Sichtbare hineinpasst - inklusive
+      der Ast-Beschriftungen. Waechst der Baum, zoomt die Ansicht heraus. */
   function fitTree() {
     if (!R.treeWrap) return;
     const r = R.treeWrap.getBoundingClientRect();
-    // Standard: nah genug, dass die Knoten lesbar sind - der Rest wird erkundet
-    const reach = 105 + (highestRing() + 1.4) * 82;
-    view.z = U.clamp(Math.min(r.width, r.height) / (reach * 2), 0.34, 0.95);
-    view.x = r.width / 2; view.y = r.height / 2;
+    if (!r.width) return;
+    let minX = -160, maxX = 160, minY = -160, maxY = 160;
+    D.NODES.forEach(n => {
+      if (!sichtbar(n.id)) return;
+      const p = D.nodePos(n);
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    // Rand fuer Knotenbeschriftung und die dreizeiligen Ast-Ueberschriften
+    const rand = 185;
+    minX -= rand; maxX += rand; minY -= rand; maxY += rand;
+    const bw = maxX - minX, bh = maxY - minY;
+    view.z = U.clamp(Math.min(r.width / bw, r.height / bh), 0.22, 1.5);
+    view.x = r.width / 2 - ((minX + maxX) / 2) * view.z;
+    view.y = r.height / 2 - ((minY + maxY) / 2) * view.z;
     applyView();
-  }
-  /** Der äußerste Ring, in dem schon etwas gekauft wurde (bestimmt den Startzoom). */
-  function highestRing() {
-    let h = 2;
-    for (const id in S.nodes) {
-      const n = D.NODE_BY_ID[id];
-      if (S.nodes[id] > 0 && n && n.ring > h) h = n.ring;
-    }
-    return h;
   }
 
   function selectNode(id) {
@@ -583,11 +625,26 @@ const UI = (() => {
     setTimeout(() => c.remove(), 950);
   }
 
+  /** Sichtbar ist, was gekauft wurde, und was unmittelbar daran anschliesst.
+      Alles weiter aussen bleibt im Dunkeln - so waechst der Baum wirklich
+      mit, statt von Anfang an fertig dazustehen. */
+  function sichtbar(id) {
+    const n = D.NODE_BY_ID[id];
+    if ((S.nodes[id] || 0) > 0) return true;              // selbst gekauft
+    if (!n.req) return true;                              // erster Knoten eines Astes
+    return (S.nodes[n.req] || 0) > 0;                     // Elternknoten gekauft
+  }
+
   function refreshTree() {
     if (!built.baum) return;
     U.$('#wp-n').textContent = U.fmtInt(E.wpAvail());
     for (const id in nodeEls) {
       const { el, lv, n } = nodeEls[id];
+      const zeig = sichtbar(id);
+      el.classList.toggle('verborgen', !zeig);
+      const link = linkEls[id];
+      if (link) link.classList.toggle('verborgen', !zeig);
+      if (!zeig) continue;
       const st = E.nodeState(id);
       el.classList.toggle('locked', st.gated || !st.parentOk);
       el.classList.toggle('avail', !st.gated && st.parentOk);
@@ -596,7 +653,6 @@ const UI = (() => {
       el.classList.toggle('can', st.canBuy);
       el.classList.toggle('sel', selNode === id);
       lv.textContent = st.lv > 0 ? (st.maxed ? 'MAX' : st.lv + '/' + n.max) : (st.gated ? '🔒' : '');
-      const link = linkEls[id];
       if (link) { link.classList.toggle('on', st.lv > 0); link.classList.toggle('off', st.lv === 0); }
     }
     weaveEls.forEach(w => {
@@ -610,6 +666,19 @@ const UI = (() => {
       const sk = 'scale(' + weite.toFixed(3) + ')';
       if (segEls[k].style.transform !== sk) segEls[k].style.transform = sk;
       if (tagEls[k]) setText(tagEls[k], inf.stufen + ' / ' + inf.moeglich);
+      /* Die Beschriftung sitzt immer knapp hinter dem aeussersten sichtbaren
+         Knoten des Astes - sonst schwebt sie weit weg im Leeren. */
+      if (tagGrp[k]) {
+        let weit = 150;
+        D.NODES.forEach(n => {
+          if (n.b !== k || !sichtbar(n.id)) return;
+          const pp = D.nodePos(n);
+          if (pp.rad > weit) weit = pp.rad;
+        });
+        const a = D.BRANCHES[k].ang * Math.PI / 180, rad = weit + 92;
+        const tr = `translate(${(Math.cos(a) * rad).toFixed(0)},${(Math.sin(a) * rad).toFixed(0)})`;
+        if (tagGrp[k].getAttribute('transform') !== tr) tagGrp[k].setAttribute('transform', tr);
+      }
     }
     if (selNode) renderNodePanel();     // neue Punkte schalten den Knopf sofort frei
   }
@@ -631,9 +700,9 @@ const UI = (() => {
         </div>
       </div>
       <h2 class="sec">Mutationen</h2>
-      <p class="hint">Mutationen bleiben für immer. Sie kosten Sporen — den Multiplikator aus deinen
-        <b>insgesamt gesammelten</b> Sporen verlierst du dabei nicht.</p>
-      <div class="card-grid" id="muts"></div>`;
+      <p class="hint">Bleiben für immer. Ausgeben kostet Sporen — der Produktions-Bonus aus deinen
+        <b>insgesamt gesammelten</b> Sporen bleibt davon unberührt.</p>
+      <div id="muts"></div>`;
 
     R.spGain = U.$('#sp-gain'); R.spSub = U.$('#sp-sub'); R.spBar = U.$('#sp-bar');
     R.spBtn = U.$('#do-pres'); R.spStats = U.$('#sp-stats'); R.spAuto = U.$('#sp-auto');
@@ -652,48 +721,50 @@ const UI = (() => {
 
     R.mutGrid = U.$('#muts');
     R.mutCards = [];
-    D.MUTATIONS.forEach(mu => {
-      const c = U.el('div', 'card');
-      c.innerHTML = `<h4>${mu.ic} ${mu.name}</h4><div class="lvl" data-lv></div>
-        <p data-d></p><div class="cost" data-cost></div>
-        <button class="cbtn" data-buy>Mutieren</button>`;
-      c.querySelector('[data-buy]').onclick = ev => {
-        if (E.buyMut(mu.id)) {
-          FX.sfx.node(); FX.burst(ev.clientX, ev.clientY, '#f7c948', 12, 3); refreshSporen(); refreshTop();
-        } else FX.sfx.err();
-      };
-      R.mutCards.push({ c, mu, lv: c.querySelector('[data-lv]'), d: c.querySelector('[data-d]'),
-        cost: c.querySelector('[data-cost]'), btn: c.querySelector('[data-buy]') });
-      R.mutGrid.appendChild(c);
+    ['produktion', 'sporen', 'komfort'].forEach(g => {
+      const [titel, was] = D.GRUPPEN_NAME[g];
+      const kopf = U.el('div', 'mut-gruppe', `<div class="mg-titel">${titel}</div><div class="mg-was">${was}</div>`);
+      R.mutGrid.appendChild(kopf);
+      const raster = U.el('div', 'card-grid');
+      D.MUTATIONS.filter(m => m.gruppe === g).forEach(mu => {
+        const c = U.el('div', 'card mut');
+        c.innerHTML = `<h4>${mu.ic} ${mu.name} <span class="lvl" data-lv></span></h4>
+          <p data-d></p>
+          <button class="cbtn" data-buy><span data-btxt>Mutieren</span> <b data-cost></b></button>`;
+        c.querySelector('[data-buy]').onclick = ev => {
+          if (E.buyMut(mu.id)) {
+            FX.sfx.node(); FX.burst(ev.clientX, ev.clientY, '#f7c948', 12, 3); refreshSporen(); refreshTop();
+          } else FX.sfx.err();
+        };
+        R.mutCards.push({ c, mu, lv: c.querySelector('[data-lv]'), d: c.querySelector('[data-d]'),
+          cost: c.querySelector('[data-cost]'), btxt: c.querySelector('[data-btxt]'),
+          btn: c.querySelector('[data-buy]') });
+        raster.appendChild(c);
+      });
+      R.mutGrid.appendChild(raster);
     });
   }
 
   function refreshSporen() {
     if (!built.sporen) return;
     const g = E.sporeGain();
-    const inCh = !!S.activeChall;
     const mult = E.sporeMult(S.sporeLife);
     setText(R.spGain, U.fmtInt(g));
     const nextAt = Math.pow((g + 1) / Math.max(1e-9, E.m.spore), 1 / (0.35 + E.m.sporeExp)) * 1e9;
-    setHTML(R.spSub, `Du löst dich auf und beginnst neu. <b>Biomasse und Strukturen</b> gehen verloren —
-      Skillbaum, Reifegrad, Erfolge und Mutationen bleiben.<br>
-      Sporen geben dauerhaft Produktion: aktuell <b>${U.fmtMul(mult)}</b> aus ${U.fmtInt(S.sporeLife)} gesammelten Sporen.
-      ${g > 0 ? `<br>Nächste Spore bei <b>${U.fmt(nextAt)}</b> Biomasse in diesem Durchlauf.` : ''}`);
+    setHTML(R.spSub, `Biomasse und Strukturen gehen verloren, alles andere bleibt.
+      Gesammelte Sporen geben dauerhaft <b>${U.fmtMul(mult)}</b> Produktion.`);
     setW(R.spBar, E.sporeProgress() * 100);
 
-    const can = g > 0 && !inCh;
+    const can = g > 0;
     R.spBtn.classList.toggle('btn-primary', can);
     R.spBtn.disabled = !can;
-    setText(R.spBtn, inCh ? 'Während einer Prüfung nicht möglich'
-      : g > 0 ? `Sporenflug — ${U.fmtInt(g)} Sporen`
+    setText(R.spBtn, g > 0 ? `Sporenflug — ${U.fmtInt(g)} Sporen`
       : `Noch ${U.fmt(Math.max(0, 1e9 - S.runTotal))} Biomasse nötig`);
 
     setHTML(R.spStats, `
       <div>Sporen verfügbar<b>${U.fmtInt(S.sporen)}</b></div>
-      <div>Sporen gesamt<b>${U.fmtInt(S.sporeLife)}</b></div>
-      <div>Sporenflüge<b>${U.fmtInt(S.prestiges)}</b></div>
-      <div>Dieser Durchlauf<b>${U.fmtTimeShort(S.runTime)}</b></div>
-      <div>Bester Flug<b>${U.fmtInt(S.stats.bestSpores)}</b></div>`);
+      <div>gesammelt<b>${U.fmtInt(S.sporeLife)}</b></div>
+      <div>Sporenflüge<b>${U.fmtInt(S.prestiges)}</b></div>`);
 
     R.spAuto.classList.toggle('hidden', !E.m.autoPrestige);
     R.apSw.classList.toggle('on', S.autoPrestigeOn);
@@ -705,11 +776,11 @@ const UI = (() => {
       const st = E.mutState(m.mu.id);
       m.c.classList.toggle('can', st.canBuy);
       m.c.classList.toggle('maxed', st.maxed);
-      setText(m.lv, `Stufe ${st.lv} / ${m.mu.max}`);
+      setText(m.lv, st.lv + ' / ' + m.mu.max);
       setHTML(m.d, m.mu.d(st.maxed ? st.lv : st.lv + 1));
-      setText(m.cost, st.maxed ? '' : `${U.fmtInt(st.cost)} Sporen`);
+      setText(m.cost, st.maxed ? '' : U.fmtInt(st.cost));
       m.btn.disabled = !st.canBuy;
-      setText(m.btn, st.maxed ? 'Voll ausgebaut' : st.lv > 0 ? 'Weiter mutieren' : 'Mutieren');
+      setText(m.btxt, st.maxed ? 'Voll ausgebaut' : st.lv > 0 ? 'Weiter' : 'Mutieren');
     });
   }
 
@@ -762,11 +833,10 @@ const UI = (() => {
       Symbiose-Punkte geben dauerhaft Produktion: aktuell <b>${U.fmtMul(mult)}</b>.`);
     setW(R.syBar, U.clamp(Math.log10(Math.max(1, S.sporeLife)) / 6, 0, 1) * 100);
 
-    const can = g > 0 && !S.activeChall;
+    const can = g > 0;
     R.syBtn.classList.toggle('btn-primary', can);
     R.syBtn.disabled = !can;
-    setText(R.syBtn, S.activeChall ? 'Während einer Prüfung nicht möglich'
-      : g > 0 ? `Symbiose eingehen — ${U.fmtInt(g)} Punkte`
+    setText(R.syBtn, g > 0 ? `Symbiose eingehen — ${U.fmtInt(g)} Punkte`
       : `Benötigt ${U.fmt(1e6)} gesammelte Sporen (aktuell ${U.fmt(S.sporeLife)})`);
 
     setHTML(R.syStats, `
@@ -785,66 +855,6 @@ const UI = (() => {
       x.btn.disabled = !canB;
       setText(x.btn, owned ? 'Erschlossen' : !prevOk ? 'Erst das vorige Biom' : 'Erschließen');
       setText(x.cost, owned ? '' : `${x.b.cost} Symbiose-Punkte`);
-    });
-  }
-
-  /* ================= REITER: PRÜFUNGEN ================= */
-  function buildPruef() {
-    const p = panel('pruefung');
-    p.innerHTML = `
-      <h2 class="sec">Prüfungen</h2>
-      <p class="hint">Eine Prüfung setzt deinen Durchlauf zurück und legt dir ein Handicap auf.
-        Erreichst du das Ziel, wird die Belohnung <b>dauerhaft</b> gutgeschrieben. Du kannst jederzeit abbrechen.</p>
-      <div id="chal-active"></div>
-      <div class="card-grid" id="chals"></div>`;
-    R.chalActive = U.$('#chal-active');
-    R.chalGrid = U.$('#chals');
-    R.chalCards = [];
-    D.CHALLENGES.forEach(ch => {
-      const c = U.el('div', 'card');
-      c.innerHTML = `<h4>${ch.ic} ${ch.name}</h4><div class="lvl" data-lv></div>
-        <p><b style="color:var(--danger)">Handicap:</b> ${ch.rule}</p>
-        <div class="cost" data-goal></div><div class="cost" data-rew style="color:var(--acc)"></div>
-        <button class="cbtn" data-go>Antreten</button>`;
-      c.querySelector('[data-go]').onclick = () => Game.enterChall(ch.id);
-      R.chalCards.push({ c, ch, lv: c.querySelector('[data-lv]'), goal: c.querySelector('[data-goal]'),
-        rew: c.querySelector('[data-rew]'), btn: c.querySelector('[data-go]') });
-      R.chalGrid.appendChild(c);
-    });
-  }
-
-  function refreshPruef() {
-    if (!built.pruefung) return;
-    if (!R.chalBox) {
-      R.chalActive.innerHTML = `<div class="prestige-box" style="border-color:rgba(239,107,107,.4)">
-        <h3 id="ca-name"></h3><div class="pb-sub" id="ca-sub"></div>
-        <div class="pbar"><div id="ca-bar"></div></div>
-        <button class="btn btn-danger" id="chal-abort">Prüfung abbrechen</button></div>`;
-      R.chalBox = U.$('.prestige-box', R.chalActive);
-      R.caName = U.$('#ca-name'); R.caSub = U.$('#ca-sub'); R.caBar = U.$('#ca-bar');
-      U.$('#chal-abort').onclick = () => { E.leaveChall(false); FX.toast('Prüfung abgebrochen', '', ''); refreshAll(); };
-    }
-    R.chalActive.classList.toggle('hidden', !S.activeChall);
-    if (S.activeChall) {
-      const ch = D.CHAL_BY_ID[S.activeChall];
-      const goal = E.challGoal(S.activeChall);
-      const pr = U.clamp(Math.log10(Math.max(1, S.runTotal)) / Math.log10(goal), 0, 1);
-      setText(R.caName, `${ch.ic} ${ch.name} läuft`);
-      setHTML(R.caSub, `${ch.rule}<br>Ziel: <b>${U.fmt(goal)}</b> Biomasse in diesem Durchlauf —
-        aktuell <b>${U.fmt(S.runTotal)}</b>.`);
-      setW(R.caBar, pr * 100);
-    }
-
-    R.chalCards.forEach(x => {
-      const t = S.chall[x.ch.id] || 0;
-      const done = t >= x.ch.goals.length;
-      setText(x.lv, `Stufe ${t} / ${x.ch.goals.length}`);
-      x.c.classList.toggle('done', done);
-      setHTML(x.goal, done ? 'Alle Stufen bestanden.' : `Ziel: <b style="color:var(--txt)">${U.fmt(x.ch.goals[t])}</b> Biomasse im Durchlauf`);
-      setText(x.rew, done ? x.ch.rewardText[t - 1] : 'Belohnung: ' + x.ch.rewardText[t]);
-      x.c.classList.toggle('ready', !done && !S.activeChall);
-      x.btn.disabled = done || !!S.activeChall;
-      setText(x.btn, done ? 'Bestanden' : S.activeChall ? 'Andere Prüfung läuft' : t > 0 ? 'Nächste Stufe' : 'Antreten');
     });
   }
 
@@ -913,8 +923,8 @@ const UI = (() => {
       <div class="opt-row name-row">
         <div style="min-width:170px">
           <div class="ol">Name deines Myzels</div>
-          <div class="od">So stehst du in der weltweiten Bestenliste. Gesendet wird
-            ausschließlich, wenn du dort auf „Ergebnis senden" klickst.</div>
+          <div class="od">Unter diesem Namen stehst du in der weltweiten Bestenliste.
+            Dein Stand wird von selbst eingetragen — abschalten kannst du das oben.</div>
         </div>
         <input type="text" id="opt-name" maxlength="22" placeholder="z. B. Waldgeflecht">
         <button class="btn sm" id="opt-lb">Bestenliste öffnen</button>
@@ -945,7 +955,6 @@ const UI = (() => {
 
     const opts = U.$('#opts');
     const rows = [
-      ['sound', 'Ton', 'Kurze Klänge bei Klicks, Käufen und Erfolgen.'],
       ['particles', 'Partikel', 'Sporen und Funken. Ausschalten spart Leistung.'],
       ['ticker', 'Waldmeldungen', 'Kleine Textzeilen unter den Strukturen.'],
       ['offline', 'Offline-Wachstum', 'Rechnet Zeit an, in der das Spiel geschlossen war.'],
@@ -962,6 +971,19 @@ const UI = (() => {
       };
       opts.appendChild(r);
     });
+    const kr = U.el('div', 'opt-row', `<div><div class="ol">Klänge</div>
+      <div class="od">Kurze Töne bei Klicks, Käufen und Erfolgen.</div></div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <input type="range" id="sfx-vol" min="0" max="100" step="1" value="${Math.round(S.opt.sfxVol * 100)}">
+        <span class="switch ${S.opt.sound ? 'on' : ''}" id="sfx-sw"></span>
+      </div>`);
+    U.$('#sfx-sw', kr).onclick = e => {
+      S.opt.sound = !S.opt.sound; e.target.classList.toggle('on', S.opt.sound);
+      refreshTop(); if (S.opt.sound) FX.sfx.click();
+    };
+    U.$('#sfx-vol', kr).oninput = e => { S.opt.sfxVol = +e.target.value / 100; FX.sfx.click(); };
+    opts.appendChild(kr);
+
     const mr = U.el('div', 'opt-row', `<div><div class="ol">Musik</div>
       <div class="od">Ein ruhiger Klangteppich, der live erzeugt wird — er wiederholt sich nie.</div></div>
       <div style="display:flex;gap:12px;align-items:center">
@@ -1064,7 +1086,7 @@ const UI = (() => {
   /* ================= Takt ================= */
   function refreshTab(force) {
     ({ netz: refreshNetz, baum: refreshTree, sporen: refreshSporen, symbiose: refreshSym,
-       pruefung: refreshPruef, erfolge: refreshErfolge, statistik: refreshStat,
+       erfolge: refreshErfolge, statistik: refreshStat,
        optionen: refreshOpt }[active] || (() => {}))();
   }
   function refreshAll() {

@@ -226,7 +226,8 @@ const FX = (() => {
     o.frequency.setValueAtTime(freq, a.currentTime);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, a.currentTime + dur);
     g.gain.setValueAtTime(0, a.currentTime);
-    g.gain.linearRampToValueAtTime(vol || 0.06, a.currentTime + 0.012);
+    const lauf = (S.opt.sfxVol === undefined ? 0.6 : S.opt.sfxVol);
+    g.gain.linearRampToValueAtTime((vol || 0.06) * lauf * 1.6, a.currentTime + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
     o.connect(g); g.connect(a.destination);
     o.start(); o.stop(a.currentTime + dur + 0.02);

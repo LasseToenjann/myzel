@@ -1,5 +1,41 @@
 # Änderungsverlauf
 
+## v1.8 – Prüfungen raus, Kern zeigt den Fortschritt
+
+**Prüfungen entfernt**
+- Sie waren als freiwillige Handicaps gedacht, spielten sich aber zäh: Man setzte seinen Durchlauf zurück, um dieselbe Schleife mit schlechteren Zahlen zu wiederholen. Alles, was daran hing, ist mit weg — Reiter, Skillknoten, Mutation „Prüfungsmeister", drei Erfolge und das Feld in der Bestenliste.
+- An die Stelle des Skillknotens tritt **Grabungen** (+8 % Produktion je Stufe), an die Stelle der drei Erfolge treten *Meilenstein*, *Breit aufgestellt* und *Langer Atem*.
+
+**Der Kern zeigt, wie weit du bist**
+- Der Nähr-Orb sitzt jetzt **mittig** statt links am Rand.
+- Ein Ring um ihn füllt sich bis zum nächsten Reifegrad.
+- Der Orb wird mit steigendem Reifegrad **größer und heller**, und alle fünf Reifegrade wächst eine weitere Hyphe aus ihm heraus. Vorher sah er bei Reifegrad 2 genauso aus wie bei 80.
+
+**Bedienung**
+- Die **Optionen** liegen nur noch hinter dem Menü oben rechts — die Reiterleiste ist damit auf das Spiel selbst beschränkt.
+- **Musik startet aus.** Wer sie will, schaltet sie über das ♫ oben rechts ein.
+
+
+## v1.6 – Der Baum baut sich wirklich auf
+
+**Skillbaum**
+- **Nebel**: Sichtbar ist nur, was gekauft wurde und was unmittelbar daran anschließt. Alles weiter außen taucht erst auf, wenn der Weg dorthin gekauft ist — der Baum wächst also wirklich mit, statt von Anfang an fertig dazustehen.
+- **Clean statt schwarze Blöcke**: Ungekaufte Knoten sind nur noch eine Kontur in der Astfarbe, gekaufte sind gefüllt. Der schwarze Vollkörper wirkte bei eckigen Formen wie ein Klotz.
+- **Ast-Überschriften wandern mit**: Sie sitzen immer knapp hinter dem äußersten sichtbaren Knoten ihres Astes, statt weit weg im Leeren zu schweben.
+- **Ansicht passt sich selbst ein**: Beim Öffnen wird so gezoomt, dass alles Sichtbare hineinpasst — mit jedem neuen Knoten also automatisch etwas weiter heraus.
+- Zoom-Knöpfe, Hinweiszeile und die Beschriftung „Ursprung" sind entfallen. Ziehen und Zoomen erklärt sich von selbst.
+- **„Skillbaum zurücksetzen" ist weg.** Wer den Baum aufbaut, soll ihn nicht mit einem Klick wieder einreißen.
+- Die Wegkrümmung variiert leicht je Knoten, damit auch innerhalb eines Astes nicht jeder Weg gleich aussieht.
+
+**Sporen-Reiter entrümpelt**
+- Die achtzehn Mutationen standen als eine Wand gleich aussehender Karten da. Jetzt sind sie in drei Gruppen sortiert, jede mit einer Zeile dazu, was sie bewirkt: *Mehr Produktion*, *Sporen und Neustart*, *Bequemer spielen*.
+- Die Karten sind kompakter, die Kosten stehen im Knopf. Der Kopfbereich ist von fünf auf drei Kennzahlen gekürzt.
+
+**Musik und Klänge**
+- Die Musik war zu düster und zu langsam: Sie lag eine Oktave tiefer und in Moll. Jetzt dur-gefärbt, heller liegend, mit doppelt so schnellem Akkordwechsel und häufigeren Tropfentönen.
+- **Eigener Lautstärkeregler für die Klänge**, getrennt von der Musik.
+
+
 ## v1.4 – Jeder Ast sieht anders aus
 
 - Bisher unterschieden sich die sechs Äste nur durch die Farbe — Wege und Knoten waren überall gleich. Jetzt hat **jeder Ast eine eigene Formensprache**: Wachstum eine geschwungene Ader mit runden Knoten, Effizienz rechte Winkel und Sechsecke, Symbiose zwei Stränge und Rauten, Automatik Schienen mit Schwellen und Riegeln, Zersetzung gestrichelte Wege und unregelmäßige Schollen, Tiefe einen punktierten Schacht mit Dreiecken.

@@ -232,14 +232,15 @@ const Game = (() => {
     const { list, online } = await LB.fetchList();
     const mineId = (S && S.pid) || '';
 
+    /* Die Zeile zeigt nur, was zaehlt: Rang, Name, Reifegrad. Der Name bekommt
+       den ganzen uebrigen Platz - vorher wurde er nach vier Zeichen
+       abgeschnitten, obwohl er das Wichtigste ist. Alles andere erscheint
+       beim Aufklappen. */
     const zeile = (e, i) => `
       <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === mineId ? 'me' : ''}" data-i="${i}">
         <span class="r">${i + 1}</span>
         <span class="n">${escapeHtml(e.name)}</span>
         <span class="lbv">Reifegrad <b>${e.level}</b></span>
-        <span class="lbv">${U.fmt(e.bio)}</span>
-        <span class="lbv dim">${e.pres} Flüge</span>
-        <span class="lbv dim">${e.biomes}/8 Biome</span>
         <span class="lb-more">▾</span>
       </div>
       <div class="lb-detail" data-d="${i}"></div>`;
@@ -249,8 +250,7 @@ const Game = (() => {
         ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse. Zeile antippen für Einzelheiten.'
         : 'Die Rangliste ist gerade nicht erreichbar — hier steht der zuletzt geladene Stand.'}</p>
       <div class="lb-head"><span class="r">#</span><span class="n">Myzel</span>
-        <span class="lbv">Stand</span><span class="lbv">Biomasse</span>
-        <span class="lbv dim">Flüge</span><span class="lbv dim">Biome</span><span class="lb-more"></span></div>
+        <span class="lbv">Stand</span><span class="lb-more"></span></div>
       <div class="lb-list">${list.slice(0, 30).map(zeile).join('') || '<p style="opacity:.6">Noch keine Einträge. Sei der erste.</p>'}</div>
       <div class="mrow"><button class="btn ghost" id="lb-close">Schließen</button></div>`, m => {
       U.$('#lb-close', m).onclick = close;

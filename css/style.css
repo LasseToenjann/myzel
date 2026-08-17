@@ -527,9 +527,9 @@ input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(-
 .lb-row{cursor:pointer}
 .lb-row:hover{background:rgba(79,224,160,.09)}
 .lb-row.open{background:rgba(79,224,160,.12);border-radius:var(--r-s) var(--r-s) 0 0}
-.lb-head .lbv,.lb-row .lbv{width:88px;flex-shrink:0;font-size:12.5px}
-.lb-row .lbv b{color:var(--lime)}
-.lb-head .dim,.lb-row .dim{color:var(--dim);width:74px}
+.lb-head .lbv,.lb-row .lbv{width:104px;flex-shrink:0;font-size:12.5px;text-align:right}
+.lb-row .lbv b{color:var(--lime);font-size:14px}
+.lb-row .n{font-size:14.5px}
 .lb-more{width:16px;flex-shrink:0;color:var(--dim2);font-size:11px;transition:transform .2s}
 .lb-row.open .lb-more{transform:rotate(180deg);color:var(--acc)}
 .lb-detail{display:none;padding:12px 14px 14px;background:rgba(0,0,0,.32);
@@ -540,8 +540,8 @@ input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(-
 .lb-grid span{font-size:10.5px;color:var(--dim);letter-spacing:.6px}
 .lb-grid b{font-size:14px;color:var(--txt)}
 @media(max-width:700px){
-  .lb-head .dim,.lb-row .dim{display:none}
-  .lb-head .lbv,.lb-row .lbv{width:66px;font-size:11.5px}
+  .lb-head .lbv,.lb-row .lbv{width:76px;font-size:11.5px}
+  .lb-row .lbv b{font-size:13px}
 }
 
 /* ============ Scrollleisten ============ */
@@ -583,3 +583,17 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   input[type=range]{height:8px;width:140px}
   input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
 }
+
+/* ============ Skillbaum: eigene Formensprache je Ast ============ */
+.tlink .lp{fill:none;stroke:var(--lc);stroke-linecap:round;stroke-linejoin:round}
+.tlink.off .lp{stroke:rgba(90,110,100,.20)}
+.tlink.on .lp{opacity:.62}
+.tlink .lp.zweit{opacity:.55}
+.tlink .lp.eckig{stroke-linejoin:miter;stroke-linecap:butt}
+.tlink .lp.gestrichelt{stroke-dasharray:9 7}
+.tlink.on .lp.gestrichelt{animation:zerfallFluss 14s linear infinite}
+@keyframes zerfallFluss{to{stroke-dashoffset:-64}}
+.tlink .lp.punktiert{stroke-dasharray:2 9}
+.tlink .lp.duenn{opacity:.5}
+.tlink.on .lp.duenn{opacity:.75}
+.branch-zweck{font-size:10px;text-anchor:middle;opacity:.5;letter-spacing:.4px;text-transform:none}

@@ -244,7 +244,6 @@ const UI = (() => {
           <div class="zoom-ctl">
             <button id="z-in">+</button><button id="z-out">−</button><button id="z-fit">⌂</button>
           </div>
-          <div class="legend" id="legend"></div>
           <button class="btn sm" id="respec">Skillbaum zurücksetzen</button>
         </div>
         <div class="tree-hint">Ziehen zum Verschieben · zwei Finger oder Mausrad zum Zoomen · Knoten antippen</div>
@@ -297,31 +296,32 @@ const UI = (() => {
       ic.textContent = b.ic; gr.appendChild(ic);
       const t = U.svgEl('text', { class: 'branch-label', y: 8, fill: b.col });
       t.textContent = b.name; gr.appendChild(t);
-      const z = U.svgEl('text', { class: 'branch-count', y: 26, fill: b.col });
+      const zw = U.svgEl('text', { class: 'branch-zweck', y: 25, fill: b.col });
+      zw.textContent = b.zweck; gr.appendChild(zw);
+      const z = U.svgEl('text', { class: 'branch-count', y: 42, fill: b.col });
       gr.appendChild(z);
       g.appendChild(gr);
       tagEls[k] = z;
     }
 
-    /* Verbindungen. Geschwungen statt gerade: eine quadratische Kurve mit
-       Kontrollpunkt zwischen Eltern- und Kindknoten, leicht nach aussen
-       versetzt. Das nimmt dem Baum das Technische. */
-    const kurve = (a, b) => {
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      const d = Math.hypot(b.x - a.x, b.y - a.y);
-      const nx = -(b.y - a.y) / d, ny = (b.x - a.x) / d;
-      const bogen = d * 0.13;
-      return `M${a.x} ${a.y} Q${mx + nx * bogen} ${my + ny * bogen} ${b.x} ${b.y}`;
-    };
-
+    /* Verbindungen: jeder Ast hat seine eigene Wegform - eine geschwungene
+       Ader beim Wachstum, rechte Winkel bei der Effizienz, zwei Straenge bei
+       der Symbiose, Schienen bei der Automatik und so fort. Farbe allein
+       reicht nicht, um Kategorien auseinanderzuhalten. */
     D.NODES.forEach(n => {
       if (!n.req) return;
+      const br = D.BRANCHES[n.b];
       const a = D.nodePos(D.NODE_BY_ID[n.req]), b = D.nodePos(n);
-      const l = U.svgEl('path', { class: 'tlink off', d: kurve(a, b),
-        'stroke-width': Math.max(1.6, 4.4 - n.ring * 0.26) });
-      l.style.setProperty('--lc', D.BRANCHES[n.b].col);
-      g.appendChild(l);
-      linkEls[n.id] = l;
+      const teile = D.wegForm(br.form, a, b);
+      const gruppe = U.svgEl('g', { class: 'tlink off' });
+      gruppe.style.setProperty('--lc', br.col);
+      teile.forEach(t => {
+        const l = U.svgEl('path', { class: 'lp ' + (t.klasse || ''), d: t.d,
+          'stroke-width': t.klasse === 'duenn' ? 1.5 : Math.max(1.7, 4.2 - n.ring * 0.24) });
+        gruppe.appendChild(l);
+      });
+      g.appendChild(gruppe);
+      linkEls[n.id] = gruppe;
     });
 
     // Verwebungen zwischen benachbarten Aesten - leuchten erst auf,
@@ -349,12 +349,16 @@ const UI = (() => {
     cl.textContent = 'URSPRUNG'; core.appendChild(cl);
     g.appendChild(core);
 
-    // Verbindung Kern -> erste Knoten
+    // Verbindung Kern -> erste Knoten, ebenfalls in der Form des Astes
     D.NODES.filter(n => !n.req).forEach(n => {
-      const b = D.nodePos(n);
-      const l = U.svgEl('path', { class: 'tlink on', d: kurve({ x: 0, y: 0 }, b), 'stroke-width': 4.4 });
-      l.style.setProperty('--lc', D.BRANCHES[n.b].col);
-      g.insertBefore(l, g.firstChild);
+      const br = D.BRANCHES[n.b];
+      const gruppe = U.svgEl('g', { class: 'tlink on' });
+      gruppe.style.setProperty('--lc', br.col);
+      D.wegForm(br.form, { x: 0, y: 0 }, D.nodePos(n)).forEach(t => {
+        gruppe.appendChild(U.svgEl('path', { class: 'lp ' + (t.klasse || ''), d: t.d,
+          'stroke-width': t.klasse === 'duenn' ? 1.5 : 4.2 }));
+      });
+      g.insertBefore(gruppe, g.firstChild);
     });
 
     // Knoten
@@ -363,8 +367,11 @@ const UI = (() => {
       const el = U.svgEl('g', { class: 'tnode' + (n.max === 1 ? ' key' : ''), transform: `translate(${pos.x},${pos.y})` });
       el.style.setProperty('--nc', D.BRANCHES[n.b].col);
       const r = n.max === 1 ? 25 : 21;
-      if (n.max === 1) el.appendChild(U.svgEl('circle', { class: 'halo', r: r + 7 }));
-      el.appendChild(U.svgEl('circle', { class: 'bg', r }));
+      if (n.max === 1) el.appendChild(U.svgEl('circle', { class: 'halo', r: r + 8 }));
+      const kf = D.kopfForm(D.BRANCHES[n.b].kopf, r);
+      const form = U.svgEl(kf.tag, kf.attr);
+      form.setAttribute('class', 'bg');
+      el.appendChild(form);
       const t = U.svgEl('text', { class: 'ic' }); t.textContent = n.ic;
       el.appendChild(t);
       const lv = U.svgEl('text', { class: 'lvl', y: r + 15 });
@@ -375,14 +382,7 @@ const UI = (() => {
     });
 
     // Legende
-    const leg = U.$('#legend');
-    for (const k in D.BRANCHES) {
-      const b = D.BRANCHES[k];
-      const row = U.el('div', '', `<i style="background:${b.col}"></i>${b.name}`);
-      row.onmouseenter = () => { R.treeG.classList.add('fokus'); segEls[k].classList.add('hell'); hebeAst(k, true); };
-      row.onmouseleave = () => { R.treeG.classList.remove('fokus'); segEls[k].classList.remove('hell'); hebeAst(k, false); };
-      leg.appendChild(row);
-    }
+
 
     // Steuerung
     U.$('#respec').onclick = () => Game.confirm('Skillbaum zurücksetzen?',
@@ -1008,8 +1008,7 @@ const UI = (() => {
     };
     U.$('#keys').innerHTML = `
       <b>1 – 8</b> Struktur kaufen &nbsp;·&nbsp; <b>M</b> alle kaufbaren Strukturen kaufen &nbsp;·&nbsp;
-      <b>Leertaste</b> nähren &nbsp;·&nbsp; <b>P</b> Sporenflug &nbsp;·&nbsp; <b>S</b> Symbiose
-      <br><span style="opacity:.7">Speichern braucht keine Taste — das läuft von allein.</span>`;
+      <b>Leertaste</b> nähren &nbsp;·&nbsp; <b>P</b> Sporenflug &nbsp;·&nbsp; <b>S</b> Symbiose`;
   }
 
   function refreshOpt() {

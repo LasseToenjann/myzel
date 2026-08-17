@@ -79,7 +79,8 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 1.3 — Ast-Segmente wachsen mit dem Ausbau sichtbar nach außen. Davor:
+Version 1.4 — jeder Ast mit eigener Wege- und Knotenform, Kreis neu sortiert,
+keine Legende mehr. Davor: Ast-Segmente wachsen mit dem Ausbau sichtbar nach außen. Davor:
 drei Spielstand-Plätze mit Namenspflicht, automatischer Eintrag in die
 Bestenliste samt Detailansicht, live erzeugte Musik, Skillbaum mit eingefärbten
 Kreissegmenten je Ast und 21 Querverbindungen.

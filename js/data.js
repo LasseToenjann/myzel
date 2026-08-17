@@ -28,14 +28,94 @@ const D = (() => {
   const MILESTONE_STEP = 25;   // alle 25 Stück -> x2
 
   /* ================= SKILLBAUM ================= */
+  /* Reihenfolge im Kreis ist nicht beliebig: Verwandtes liegt nebeneinander.
+     Oben das Wachstum, rechts daneben die Symbiose (beide erhoehen die
+     Ausbeute), dann die Tiefe als Uebergang ins Meta-Spiel, unten die
+     Automatik und die Zersetzung (beide betreffen die Zeit, in der man
+     nicht zusieht), links die Effizienz - sie hilft dem Wachstum und
+     schliesst den Kreis.
+
+     form  = Wegform:  ader | kante | strang | zerfall | schiene | schacht
+     kopf  = Knotenform: kreis | sechseck | raute | scholle | riegel | spitze */
   const BRANCHES = {
-    wachstum:   { name: 'Wachstum',       col: '#7ee081', ang: -90,  ic: '🌿' },
-    effizienz:  { name: 'Effizienz',      col: '#5bd4f5', ang: -30,  ic: '⚙' },
-    symbiose:   { name: 'Symbiose',       col: '#b98bf0', ang: 30,   ic: '⚭' },
-    tiefe:      { name: 'Tiefe',          col: '#4fe0c8', ang: 90,   ic: '◈' },
-    automatik:  { name: 'Automatik',      col: '#f5a65b', ang: 150,  ic: '⟳' },
-    zersetzung: { name: 'Zersetzung',     col: '#d0a06a', ang: 210,  ic: '☾' }
+    wachstum:   { name: 'Wachstum',   col: '#7ee081', ang: -90, ic: '🌿', form: 'ader',    kopf: 'kreis' , zweck: 'mehr Produktion' },
+    symbiose:   { name: 'Symbiose',   col: '#b98bf0', ang: -30, ic: '⚭', form: 'strang',  kopf: 'raute' , zweck: 'dein Fortschritt wirkt zurück' },
+    tiefe:      { name: 'Tiefe',      col: '#4fe0c8', ang: 30,  ic: '◈', form: 'schacht', kopf: 'spitze' , zweck: 'Sporen und neue Schichten' },
+    automatik:  { name: 'Automatik',  col: '#f5a65b', ang: 90,  ic: '⟳', form: 'schiene', kopf: 'riegel' , zweck: 'kauft und klickt für dich' },
+    zersetzung: { name: 'Zersetzung', col: '#d0a06a', ang: 150, ic: '☾', form: 'zerfall', kopf: 'scholle' , zweck: 'Offline und Ruhe' },
+    effizienz:  { name: 'Effizienz',  col: '#5bc8f5', ang: 210, ic: '⚙', form: 'kante',   kopf: 'sechseck' , zweck: 'günstiger kaufen' }
   };
+
+  /* ---------- Wegformen ----------
+     Liefert die Pfadangaben fuer die Verbindung zweier Knoten. Mehrere
+     Eintraege ergeben mehrere Linien (etwa die zwei Straenge der Symbiose). */
+  function wegForm(form, a, b) {
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const nx = -(b.y - a.y) / d, ny = (b.x - a.x) / d;      // Normale
+    const geschwungen = (v) => `M${a.x} ${a.y} Q${mx + nx * v} ${my + ny * v} ${b.x} ${b.y}`;
+
+    switch (form) {
+      // Wachstum: eine organisch geschwungene Ader
+      case 'ader':
+        return [{ d: geschwungen(d * 0.17) }];
+
+      // Symbiose: zwei Straenge, die sich umeinander legen
+      case 'strang':
+        return [{ d: geschwungen(d * 0.16) }, { d: geschwungen(-d * 0.16), klasse: 'zweit' }];
+
+      // Effizienz: rechtwinklig, nichts Rundes - Ordnung eben
+      case 'kante': {
+        const kx = a.x + (b.x - a.x) * 0.62, ky = a.y + (b.y - a.y) * 0.18;
+        return [{ d: `M${a.x} ${a.y} L${kx} ${ky} L${b.x} ${b.y}`, klasse: 'eckig' }];
+      }
+
+      // Zersetzung: unterbrochen, wie zerfallendes Material
+      case 'zerfall':
+        return [{ d: geschwungen(d * 0.1), klasse: 'gestrichelt' }];
+
+      // Automatik: zwei parallele Schienen mit Schwellen dazwischen
+      case 'schiene': {
+        const o = 3.4;
+        const out = [
+          { d: `M${a.x + nx * o} ${a.y + ny * o} L${b.x + nx * o} ${b.y + ny * o}`, klasse: 'duenn' },
+          { d: `M${a.x - nx * o} ${a.y - ny * o} L${b.x - nx * o} ${b.y - ny * o}`, klasse: 'duenn' }
+        ];
+        for (let t = 0.22; t < 0.9; t += 0.22) {
+          const px = a.x + (b.x - a.x) * t, py = a.y + (b.y - a.y) * t;
+          out.push({ d: `M${px + nx * o} ${py + ny * o} L${px - nx * o} ${py - ny * o}`, klasse: 'duenn' });
+        }
+        return out;
+      }
+
+      // Tiefe: eine gerade, lang punktierte Linie - ein Schacht nach unten
+      case 'schacht':
+        return [{ d: `M${a.x} ${a.y} L${b.x} ${b.y}`, klasse: 'punktiert' }];
+
+      default:
+        return [{ d: geschwungen(d * 0.13) }];
+    }
+  }
+
+  /* ---------- Knotenformen ---------- */
+  function kopfForm(kopf, r) {
+    const eck = (n, dreh) => {
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const a = dreh + i * 2 * Math.PI / n;
+        pts.push((Math.cos(a) * r).toFixed(1) + ',' + (Math.sin(a) * r).toFixed(1));
+      }
+      return pts.join(' ');
+    };
+    switch (kopf) {
+      case 'sechseck': return { tag: 'polygon', attr: { points: eck(6, 0) } };
+      case 'raute':    return { tag: 'polygon', attr: { points: eck(4, -Math.PI / 2) } };
+      case 'spitze':   return { tag: 'polygon', attr: { points: eck(3, -Math.PI / 2) } };
+      case 'riegel':   return { tag: 'rect', attr: { x: -r * 0.92, y: -r * 0.92, width: r * 1.84, height: r * 1.84, rx: r * 0.3 } };
+      case 'scholle':  return { tag: 'polygon', attr: { points: eck(7, 0.4) } };
+      default:         return { tag: 'circle', attr: { r } };
+    }
+  }
 
   // n(id, ring, slot, icon, name, maxLevel, costBase, costGrow, descFn, applyFn, opts)
   const N = (id, b, ring, slot, ic, name, max, cb, cg, d, f, opts) =>
@@ -705,7 +785,7 @@ const D = (() => {
   BUFFS.forEach(b => BUFF_BY_ID[b.id] = b);
 
   return {
-    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, WEAVES,
+    STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, wegForm, kopfForm, WEAVES,
     SEKTOR,
     MUTATIONS, MUT_BY_ID, mutCost, BIOMES, CHALLENGES, CHAL_BY_ID, ACH, NEWS, BUFFS, BUFF_BY_ID
   };

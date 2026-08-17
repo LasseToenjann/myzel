@@ -115,9 +115,30 @@ einmal. Ein Sicherheitsnetz meldet Kreisbezüge. `LAYOUT` überschreibt Ring und
 der Automatik-Knoten, damit die acht Autokäufer als zwei parallele Linien stehen
 statt als eine lange Kette.
 
+**Eigene Formensprache je Ast.** Farbe allein reicht nicht, um Kategorien
+auseinanderzuhalten — vorher sahen alle sechs Äste identisch aus. Jeder Ast hat
+deshalb eine eigene **Wegform** (`wegForm()`) und eine eigene **Knotenform**
+(`kopfForm()`):
+
+| Ast | Weg | Knoten | Warum |
+|---|---|---|---|
+| Wachstum | geschwungene Ader | Kreis | organisch, wie eine Hyphe |
+| Symbiose | zwei Stränge | Raute | Partnerschaft, zwei Seiten |
+| Tiefe | punktierter Schacht | Dreieck | senkrecht nach unten |
+| Automatik | zwei Schienen mit Schwellen | Riegel | technisch, getaktet |
+| Zersetzung | gestrichelt, langsam fließend | Siebeneck | zerfallendes Material |
+| Effizienz | rechte Winkel | Sechseck | Ordnung, nichts Rundes |
+
+**Reihenfolge im Kreis** ist nicht beliebig: Verwandtes liegt nebeneinander. Oben
+Wachstum, daneben Symbiose (beide erhöhen die Ausbeute), dann Tiefe als Übergang
+ins Meta-Spiel, unten Automatik und Zersetzung (beide betreffen Zeit, in der man
+nicht zusieht), links Effizienz.
+
 **Kategorien sichtbar machen**: Jeder Ast bekommt ein eingefärbtes Kreissegment als
-Hintergrund (radialer Verlauf, nach außen auslaufend). Die Legende hebt beim
-Überfahren den zugehörigen Ast hervor und dimmt die übrigen.
+Hintergrund (radialer Verlauf, nach außen auslaufend). Die Beschriftung nennt Name,
+**Zweck** in Klartext und die Zahl der gekauften Stufen. Eine Legende gibt es
+bewusst nicht — die Information gehört an den Ast selbst, nicht in eine Tabelle
+daneben.
 
 **Wachsende Segmente**: Das Segment eines Astes reicht nur so weit nach außen, wie
 dieser Ast ausgebaut ist (`D.branchInfo()` liefert Stufen, Maximum und den Radius des

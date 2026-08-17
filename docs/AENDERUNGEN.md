@@ -1,5 +1,14 @@
 # Änderungsverlauf
 
+## v1.4 – Jeder Ast sieht anders aus
+
+- Bisher unterschieden sich die sechs Äste nur durch die Farbe — Wege und Knoten waren überall gleich. Jetzt hat **jeder Ast eine eigene Formensprache**: Wachstum eine geschwungene Ader mit runden Knoten, Effizienz rechte Winkel und Sechsecke, Symbiose zwei Stränge und Rauten, Automatik Schienen mit Schwellen und Riegeln, Zersetzung gestrichelte Wege und unregelmäßige Schollen, Tiefe einen punktierten Schacht mit Dreiecken.
+- Die **Reihenfolge im Kreis** ist neu sortiert: Verwandtes liegt nebeneinander. Oben Wachstum, daneben Symbiose, dann Tiefe, unten Automatik und Zersetzung, links Effizienz.
+- Die Ast-Beschriftung nennt jetzt **den Zweck in Klartext** — „mehr Produktion", „kauft und klickt für dich" — plus die Zahl der gekauften Stufen. Damit muss man nicht mehr suchen, wo was liegt.
+- Die **Legende ist entfallen**. Bei einem Skilltree braucht es keine: Die Information gehört an den Ast selbst.
+- Die Bestenliste schnitt den Namen nach vier Zeichen ab, obwohl er das Wichtigste ist. Die Zeile zeigt jetzt nur Rang, Name und Reifegrad — alles andere erscheint beim Aufklappen.
+
+
 ## v1.3 – Der Baum wächst sichtbar mit
 
 - Das eingefärbte Segment eines Astes reicht jetzt nur so weit nach außen, **wie dieser Ast ausgebaut ist**. Ein Ast ohne Investition ist bloß ein Ansatz am Kern; mit jedem gekauften Knoten schiebt sich das Segment weiter — das Myzel breitet sich sichtbar in diese Richtung aus. Der Übergang ist animiert.

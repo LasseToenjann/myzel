@@ -56,7 +56,7 @@ gesammelten Sporen bleibt beim Kaufen erhalten.
 
 **Erfolge** — 59 Stück, jeder gibt dauerhaft **+2 %** Produktion.
 
-**Statistik** — Oben die Bestenliste (die besten fünf, auf Knopfdruck alle), darunter
+**Statistik** — Oben die Bestenliste (die besten drei, auf Knopfdruck alle), darunter
 deine eigenen Werte in vier Gruppen.
 
 Die **Optionen** liegen hinter den drei Strichen oben rechts; von dort kommst du auch

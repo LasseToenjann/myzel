@@ -345,15 +345,20 @@ const Game = (() => {
       'Es wächst auch ohne dich', 'Wie lange und wie ergiebig, bestimmst du im Ast Zersetzung.']
   ];
 
+  let letzterTipp = 0;
+
   function tippsPruefen() {
     if (!S.seenTips) S.seenTips = [];
+    // Abstand halten, sonst stapeln sich beim Start mehrere Meldungen
+    if (Date.now() - letzterTipp < 7000) return;
     for (const [id, wenn, titel, text] of TIPPS) {
       if (S.seenTips.includes(id)) continue;
       let treffer = false;
       try { treffer = wenn(); } catch (e) { treffer = false; }
       if (!treffer) continue;
       S.seenTips.push(id);
-      FX.toast(titel, text, 'lime', 9000);
+      letzterTipp = Date.now();
+      FX.toast(titel, text, 'lime', 8000);
       FX.sfx.unlock();
       return;                       // höchstens eine Erklärung auf einmal
     }

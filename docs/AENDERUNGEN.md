@@ -12,7 +12,7 @@
 - Fußzeile und der Knopf „Über das Spiel" sind entfallen.
 
 **Statistik**
-- Die **Bestenliste steht jetzt oben** — zunächst die besten fünf, auf Knopfdruck die ganze Liste. Darunter erst die eigenen Werte.
+- Die **Bestenliste steht jetzt oben** — zunächst die besten drei, auf Knopfdruck die ganze Liste. Darunter erst die eigenen Werte.
 - Die eigenen Werte sind in vier Gruppen sortiert (*Gerade eben*, *Insgesamt*, *Skillbaum und Sporen*, *Nebenbei*) statt achtzehn gleichrangiger Kacheln.
 - Der Reiter ist von Anfang an sichtbar.
 

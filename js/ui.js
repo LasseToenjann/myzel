@@ -899,7 +899,7 @@ const UI = (() => {
     U.$('#lb-neu').onclick = () => ladeBestenliste(true);
     U.$('#lb-mehr').onclick = () => {
       R.lbAlle = !R.lbAlle;
-      setText(U.$('#lb-mehr'), R.lbAlle ? 'Nur die besten fünf' : 'Ganze Liste');
+      setText(U.$('#lb-mehr'), R.lbAlle ? 'Nur die besten drei' : 'Ganze Liste');
       ladeBestenliste();
     };
     ladeBestenliste();
@@ -967,7 +967,7 @@ const UI = (() => {
     setHTML(U.$('#lb-info'), online
       ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse. Zeile antippen für Einzelheiten.'
       : 'Gerade nicht erreichbar — hier steht der zuletzt geladene Stand.');
-    R.lbBox.innerHTML = list.slice(0, R.lbAlle ? 25 : 5).map((e, i) => `
+    R.lbBox.innerHTML = list.slice(0, R.lbAlle ? 25 : 3).map((e, i) => `
       <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === meine ? 'me' : ''}" data-i="${i}">
         <span class="r">${i + 1}</span><span class="n">${Game.escape(e.name)}</span>
         <span class="lbv">Reifegrad <b>${e.level}</b></span><span class="lb-more">▾</span>

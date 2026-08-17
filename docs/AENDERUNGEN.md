@@ -11,8 +11,11 @@
 - **Umbenennen** ist neu — und zieht den Namen über die feste Kennung auch in der Bestenliste nach, sonst stünde der Spielstand dort weiter unter dem alten.
 - Fußzeile und der Knopf „Über das Spiel" sind entfallen.
 
+**Erfolge**
+- 59 Kacheln in einer Reihe sagten nicht, worauf man hinarbeitet. Jetzt in fünf farbige Gruppen sortiert — *Biomasse*, *Strukturen*, *Reifegrad und Skillbaum*, *Sporen und Symbiose*, *Nebenbei* — jede mit eigenem Farbton und dem Stand (etwa `6 / 13`).
+
 **Statistik**
-- Die **Bestenliste steht jetzt oben** — zunächst die besten drei, auf Knopfdruck die ganze Liste. Darunter erst die eigenen Werte.
+- Die **Bestenliste steht jetzt oben** — die besten drei, auf Knopfdruck die ganze Liste. Darunter erst die eigenen Werte.
 - Die eigenen Werte sind in vier Gruppen sortiert (*Gerade eben*, *Insgesamt*, *Skillbaum und Sporen*, *Nebenbei*) statt achtzehn gleichrangiger Kacheln.
 - Der Reiter ist von Anfang an sichtbar.
 

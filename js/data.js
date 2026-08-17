@@ -728,6 +728,23 @@ const D = (() => {
     s => s.runTotal >= 1e6 && s.runTime < 600);
   A('idle', 'Geduld', 'Lasse das Netz 30 Minuten am Stück ungestört wachsen.', s => s.stats.maxIdle >= 1800);
 
+  /* Erfolge in fuenf Gruppen - eine Liste aus 59 gleich aussehenden Kacheln
+     sagt nicht, worauf man hinarbeitet. */
+  const ACH_GRUPPEN = [
+    ['biomasse',  'Biomasse',              '#7ee081'],
+    ['struktur',  'Strukturen',            '#5bd4f5'],
+    ['reife',     'Reifegrad und Skillbaum', '#a6e85c'],
+    ['sporen',    'Sporen und Symbiose',   '#f7c948'],
+    ['nebenbei',  'Nebenbei',              '#f5a65b']
+  ];
+  const ACH_ZU_GRUPPE = id =>
+    /^biome/.test(id) ? 'sporen' :          // vor /^bio/ pruefen, sonst greift das zuerst
+    /^bio/.test(id) ? 'biomasse' :
+    /^(hyp|frucht|all8|ms100|breit)/.test(id) ? 'struktur' :
+    /^(lvl|node)/.test(id) ? 'reife' :
+    /^(pres|spo|biome)/.test(id) ? 'sporen' : 'nebenbei';
+  ACH.forEach(a => { a.gruppe = ACH_ZU_GRUPPE(a.id); });
+
   /* ================= TICKER ================= */
   const NEWS = [
     'Ein Reh tritt auf einen Fruchtkörper. Das Netz merkt es sich.',
@@ -787,6 +804,6 @@ const D = (() => {
   return {
     STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, wegForm, kopfForm, WEAVES,
     SEKTOR,
-    MUTATIONS, MUT_BY_ID, mutCost, GRUPPEN_NAME, BIOMES, ACH, NEWS, BUFFS, BUFF_BY_ID
+    MUTATIONS, MUT_BY_ID, mutCost, GRUPPEN_NAME, BIOMES, ACH, ACH_GRUPPEN, NEWS, BUFFS, BUFF_BY_ID
   };
 })();

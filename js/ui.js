@@ -864,13 +864,25 @@ const UI = (() => {
   function buildErfolge() {
     const p = panel('erfolge');
     p.innerHTML = `<h2 class="sec">Erfolge</h2>
-      <p class="hint" id="ach-info"></p><div class="ach-grid" id="achs"></div>`;
+      <p class="hint" id="ach-info"></p><div id="achs"></div>`;
     R.achGrid = U.$('#achs');
     R.achEls = {};
-    D.ACH.forEach(a => {
-      const e = U.el('div', 'ach', `<div class="an">${a.name}</div><div class="ad">${a.d}</div>`);
-      R.achGrid.appendChild(e);
-      R.achEls[a.id] = e;
+    R.achKopf = {};
+    D.ACH_GRUPPEN.forEach(([key, titel, farbe]) => {
+      const liste = D.ACH.filter(a => a.gruppe === key);
+      if (!liste.length) return;
+      const block = U.el('div', 'ach-block');
+      block.style.setProperty('--ac', farbe);
+      block.innerHTML = `<div class="ab-kopf"><span class="ab-titel">${titel}</span>
+        <span class="ab-zahl" data-zahl></span></div><div class="ach-grid"></div>`;
+      const raster = U.$('.ach-grid', block);
+      liste.forEach(a => {
+        const e = U.el('div', 'ach', `<div class="an">${a.name}</div><div class="ad">${a.d}</div>`);
+        raster.appendChild(e);
+        R.achEls[a.id] = e;
+      });
+      R.achKopf[key] = { zahl: U.$('[data-zahl]', block), liste };
+      R.achGrid.appendChild(block);
     });
   }
   function refreshErfolge() {
@@ -878,6 +890,11 @@ const UI = (() => {
     setHTML(U.$('#ach-info'), `<b>${S.ach.length} / ${D.ACH.length}</b> errungen —
       jeder Erfolg gibt dauerhaft <b>+2 %</b> Produktion (aktuell ${U.fmtMul(Math.pow(1.02, S.ach.length))}).`);
     D.ACH.forEach(a => R.achEls[a.id].classList.toggle('got', S.ach.includes(a.id)));
+    for (const k in R.achKopf) {
+      const g = R.achKopf[k];
+      const hab = g.liste.filter(a => S.ach.includes(a.id)).length;
+      setText(g.zahl, hab + ' / ' + g.liste.length);
+    }
   }
 
   /* ================= REITER: STATISTIK ================= */

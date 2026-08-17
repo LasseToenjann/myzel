@@ -662,3 +662,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .stat-card .sv{font-size:18px}
 .btn.zurueck{margin-bottom:18px}
 .lb-knoepfe{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* ============ Erfolge in Gruppen ============ */
+.ach-block{margin-bottom:24px}
+.ab-kopf{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+.ab-titel{font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--ac)}
+.ab-zahl{font-size:11.5px;color:var(--dim2)}
+.ach-block .ach{border-left:2px solid transparent}
+.ach-block .ach.got{border-color:var(--line);border-left-color:var(--ac);
+  background:color-mix(in srgb,var(--ac) 9%,rgba(12,24,19,.7))}
+.ach-block .ach.got::before{color:var(--ac)}

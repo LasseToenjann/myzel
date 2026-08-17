@@ -54,7 +54,7 @@ gesammelten Sporen bleibt beim Kaufen erhalten.
 „Symbiose-Zugang". Sporen und Mutationen gehen dabei verloren, dafür erschließt du
 **Biome**: dauerhafte Boni, die zusätzlich die äußeren Ringe im Skillbaum öffnen.
 
-**Erfolge** — 59 Stück, jeder gibt dauerhaft **+2 %** Produktion.
+**Erfolge** — 59 Stück in fünf farbigen Gruppen, jeder gibt dauerhaft **+2 %** Produktion.
 
 **Statistik** — Oben die Bestenliste (die besten drei, auf Knopfdruck alle), darunter
 deine eigenen Werte in vier Gruppen.

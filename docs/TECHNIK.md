@@ -295,7 +295,13 @@ Bezugswert ist bewusst **nicht** `stats.bestRate`: Dort steht auch ein Wert, der
 nur während einer goldenen Spore erreicht wurde — danach sähe jedes Ablaufen
 eines Buffs wie ein Wiederaufbau aus.
 
-Im Aufbau übernimmt `nextGoal()` diese Phase als aktuelles Ziel, und die
+Bestehende Spielstände kennen `rateVorReset` nicht. `Save.pruefe()` trägt den
+Wert beim Laden einmalig aus `stats.bestRate` nach, sofern schon einmal ein
+Reset stattgefunden hat — sonst bliebe die Anzeige bis zum nächsten Sporenflug
+stumm.
+
+Im Aufbau übernimmt `nextGoal()` diese Phase als aktuelles Ziel — und zwar vor
+den Prestige-Zielen, weil die ohne Produktion unerreichbar sind, und die
 Restzeit-Schätzung wird ausgeblendet; sie ergab eine Minute nach dem Flug
 763 Tage.
 

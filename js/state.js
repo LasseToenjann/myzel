@@ -159,6 +159,15 @@ const Save = (() => {
     S.nodes = saubereTabelle(S.nodes, D.NODE_BY_ID);
     S.muts = saubereTabelle(S.muts, D.MUT_BY_ID);
     if (!S.lastSeen) S.lastSeen = S.lastSave || Date.now();
+
+    /* Spielstände von vor der Aufbau-Anzeige kennen rateVorReset nicht. Wer
+       zuletzt davor geflogen ist, steckt womöglich gerade im Wiederaufbau -
+       ohne Bezugswert bliebe die Anzeige stumm. Einmalig aus der besten
+       bisherigen Produktion nachtragen. Steht dort ein Wert, der nur mit
+       einer goldenen Spore erreicht wurde, ist er etwas zu hoch; spätestens
+       der nächste Sporenflug setzt ihn wieder gerade. */
+    const hatteReset = (S.prestiges || 0) > 0 || (S.symResets || 0) > 0;
+    if (!S.rateVorReset && hatteReset) S.rateVorReset = S.stats.bestRate || 0;
   }
 
   function newGame(name, i) {

@@ -96,7 +96,10 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.4.1 — die Aufbauphase nach einem Sporenflug ist sichtbar: Solange die
+Version 2.4.2 — die Aufbau-Anzeige greift auch fuer Spielstaende, die vor ihrer
+Einfuehrung geflogen sind (Bezugswert wird beim Laden nachgetragen).
+
+Davor: Version 2.4.1 — die Aufbauphase nach einem Sporenflug ist sichtbar: Solange die
 Produktion unter dem Stand vor dem Flug liegt, zeigt ein zweiter Balken den
 Wiederaufbau statt eines Reifegrads, der sich real nicht ruehrt. Reine Anzeige,
 keine Zahl angefasst.

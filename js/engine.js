@@ -499,23 +499,26 @@ const E = (() => {
       }
       return { txt: `${st.name} bei ${U.fmt(st.unlock)} Biomasse gesamt`, p: U.clamp(S.lifetime / st.unlock, 0, 1) };
     }
-    // 2) Sporenflug
+    /* 2) Wiederaufbau nach einem Reset. Steht bewusst vor den Prestige-Zielen:
+       Solange die Produktion unten ist, sind die ohnehin unerreichbar, und der
+       Wiederaufbau ist das Einzige, woran man gerade arbeitet. */
+    const auf = aufbau();
+    if (auf.aktiv) {
+      return { txt: `Produktion wieder aufbauen — ${U.fmt(auf.rate)} von ${U.fmt(auf.ziel)} /s`,
+        p: auf.balken };
+    }
+
+    // 3) Sporenflug
     if (S.sporeLife === 0 && sporeGain() < 1) {
       return { txt: `Sporenflug bei ${U.fmt(1e9)} Biomasse im Durchlauf`, p: sporeProgress() };
     }
-    // 3) Symbiose
+    // 4) Symbiose
     if (!symUnlocked()) {
       const n = D.NODE_BY_ID['t_sym'];
       return { txt: `Skill „${n.name}" öffnet die Symbiose-Schicht`, p: 1, jetzt: true };
     }
     if (spGain() < 1) {
       return { txt: `Symbiose bei ${U.fmt(1e6)} Sporen gesamt`, p: U.clamp(Math.log10(Math.max(1, S.sporeLife)) / 6, 0, 1) };
-    }
-    // 4) Aufbau nach einem Sporenflug - erst danach zaehlt der Reifegrad wieder
-    const auf = aufbau();
-    if (auf.aktiv) {
-      return { txt: `Produktion wieder aufbauen — ${U.fmt(auf.rate)} von ${U.fmt(auf.ziel)} /s`,
-        p: auf.balken };
     }
     // 5) nächster Reifegrad
     return { txt: `Reifegrad ${S.level + 1}`, p: levelProgress() };

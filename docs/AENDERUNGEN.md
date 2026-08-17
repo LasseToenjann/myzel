@@ -1,5 +1,23 @@
 # Änderungsverlauf
 
+## v2.4.2 – Die Aufbau-Anzeige greift auch für bestehende Spielstände
+
+Der Bezugswert für den Wiederaufbau (`S.rateVorReset`) wurde nur beim
+Sporenflug gesetzt. Wer zuletzt **vor** v2.4.1 geflogen war, hatte dort eine
+Null — und sah weiter die alte Restzeit-Anzeige, obwohl er mitten im
+Wiederaufbau steckte. Beim Laden wird der Wert jetzt einmalig aus der besten
+bisherigen Produktion nachgetragen, sofern der Spielstand überhaupt schon
+einmal geflogen ist.
+
+Steht dort ein Wert, der nur mit einer goldenen Spore erreicht wurde, ist er
+etwas zu hoch; spätestens der nächste Sporenflug setzt ihn wieder gerade.
+
+Außerdem: Der Wiederaufbau steht im Feld **Nächstes Ziel** jetzt **vor** den
+Prestige-Zielen. Solange die Produktion unten ist, sind Sporenflug und
+Symbiose ohnehin unerreichbar — der Wiederaufbau ist das Einzige, woran man
+gerade arbeitet.
+
+
 ## v2.4.1 – Der Reifegrad hängt nicht fest, er wartet auf die Produktion
 
 Nach einem Sporenflug schien der Reifegrad-Balken minutenlang stillzustehen und

@@ -458,9 +458,14 @@ const D = (() => {
      Aesten. Sie leuchten erst auf, wenn beide Enden gekauft sind - das
      Netz schliesst sich also sichtbar mit dem Fortschritt. */
   const WEAVES = [
+    // benachbarte Aeste miteinander verknuepfen - nah am Kern und weiter aussen
     ['w_druck', 'e_kompakt'], ['e_klar', 's_reife'], ['s_gemein', 't_erinner'],
     ['t_xp', 'a_s4'], ['a_gold', 'z_moder'], ['z_traeg', 'w_boden'],
-    ['w_leben', 'e_start'], ['s_viel', 't_genom'], ['z_kompost', 'a_click']
+    ['w_leben', 'e_start'], ['s_viel', 't_genom'], ['z_kompost', 'a_click'],
+    ['w_ver', 'z_verwert'], ['e_spar', 'w_dichte'], ['s_kette', 'e_leicht'],
+    ['t_sporen', 's_erfolg'], ['a_click', 't_wurzel'], ['z_zerfall', 'a_s1'],
+    ['w_myk', 'e_recyc'], ['s_pilz', 't_sym'], ['z_tief', 'a_s6'],
+    ['w_wurzel', 's_paar'], ['e_dicht', 'w_welt'], ['t_wp', 'z_ewignacht']
   ];
 
   function nodeCost(n, lv) { return Math.ceil(n.cb * Math.pow(n.cg, lv)); }
@@ -688,6 +693,7 @@ const D = (() => {
 
   return {
     STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, WEAVES,
+    SEKTOR,
     MUTATIONS, MUT_BY_ID, mutCost, BIOMES, CHALLENGES, CHAL_BY_ID, ACH, NEWS, BUFFS, BUFF_BY_ID
   };
 })();

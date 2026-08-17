@@ -231,6 +231,7 @@ const UI = (() => {
   let dragged = false;
   const nodeEls = {}, linkEls = {};
   const weaveEls = [];
+  const segEls = {};
 
   function buildBaum() {
     const p = panel('baum');
@@ -250,18 +251,51 @@ const UI = (() => {
     const g = U.$('#tree-g');
     R.treeG = g; R.treeWrap = U.$('#treewrap');
 
-    // Sanfte Hoehenlinien als Orientierung - der Baum waechst nach aussen
+    /* Eingefaerbtes Kreissegment je Ast. Ohne das sieht der Baum aus wie
+       ein einziges Geflecht - mit ihm ist sofort klar, was wozu gehoert. */
+    const defs = U.svgEl('defs');
+    Object.keys(D.BRANCHES).forEach(k => {
+      const b = D.BRANCHES[k];
+      const grad = U.svgEl('radialGradient', { id: 'seg-' + k });
+      const s1 = U.svgEl('stop', { offset: '0%', 'stop-color': b.col, 'stop-opacity': '0.10' });
+      const s2 = U.svgEl('stop', { offset: '40%', 'stop-color': b.col, 'stop-opacity': '0.045' });
+      const s3 = U.svgEl('stop', { offset: '80%', 'stop-color': b.col, 'stop-opacity': '0' });
+      grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3);
+      defs.appendChild(grad);
+    });
+    g.appendChild(defs);
+
+    const RAUS = 880;                       // Reichweite der Segmente
+    const halb = (D.SEKTOR / 2 - 2) * Math.PI / 180;   // Luecke zwischen den Aesten
+    Object.keys(D.BRANCHES).forEach(k => {
+      const b = D.BRANCHES[k];
+      const m = b.ang * Math.PI / 180;
+      const x1 = Math.cos(m - halb) * RAUS, y1 = Math.sin(m - halb) * RAUS;
+      const x2 = Math.cos(m + halb) * RAUS, y2 = Math.sin(m + halb) * RAUS;
+      const seg = U.svgEl('path', { class: 'branch-seg',
+        d: `M0 0 L${x1} ${y1} A${RAUS} ${RAUS} 0 0 1 ${x2} ${y2} Z`,
+        fill: 'url(#seg-' + k + ')' });
+      seg.dataset.branch = k;
+      g.appendChild(seg);
+      segEls[k] = seg;
+    });
+
+    // Sanfte Hoehenlinien als Orientierung
     for (let r = 1; r <= 9; r++) {
       g.appendChild(U.svgEl('circle', { class: 'ring-guide', cx: 0, cy: 0, r: 120 + r * 82 }));
     }
-    // Ast-Beschriftungen ganz aussen, in Richtung des jeweiligen Astes
+
+    // Ast-Beschriftung mit Zeichen, aussen in Richtung des Astes
     for (const k in D.BRANCHES) {
       const b = D.BRANCHES[k];
       const tip = D.branchTip(k);
-      const a = tip.ang * Math.PI / 180, rad = tip.rad + 95;
-      const t = U.svgEl('text', { class: 'branch-label', x: Math.cos(a) * rad, y: Math.sin(a) * rad, fill: b.col });
-      t.textContent = b.name;
-      g.appendChild(t);
+      const a = tip.ang * Math.PI / 180, rad = tip.rad + 62;
+      const gr = U.svgEl('g', { class: 'branch-tag', transform: `translate(${Math.cos(a) * rad},${Math.sin(a) * rad})` });
+      const ic = U.svgEl('text', { class: 'bt-ic', y: -14, fill: b.col });
+      ic.textContent = b.ic; gr.appendChild(ic);
+      const t = U.svgEl('text', { class: 'branch-label', y: 8, fill: b.col });
+      t.textContent = b.name; gr.appendChild(t);
+      g.appendChild(gr);
     }
 
     /* Verbindungen. Geschwungen statt gerade: eine quadratische Kurve mit
@@ -339,7 +373,10 @@ const UI = (() => {
     const leg = U.$('#legend');
     for (const k in D.BRANCHES) {
       const b = D.BRANCHES[k];
-      leg.appendChild(U.el('div', '', `<i style="background:${b.col}"></i>${b.name}`));
+      const row = U.el('div', '', `<i style="background:${b.col}"></i>${b.name}`);
+      row.onmouseenter = () => { R.treeG.classList.add('fokus'); segEls[k].classList.add('hell'); hebeAst(k, true); };
+      row.onmouseleave = () => { R.treeG.classList.remove('fokus'); segEls[k].classList.remove('hell'); hebeAst(k, false); };
+      leg.appendChild(row);
     }
 
     // Steuerung
@@ -419,6 +456,13 @@ const UI = (() => {
     });
 
     fitTree();
+  }
+
+  /** Hebt einen Ast hervor, waehrend die Maus auf der Legende steht. */
+  function hebeAst(k, an) {
+    for (const id in nodeEls) {
+      nodeEls[id].el.classList.toggle('gedimmt', an && nodeEls[id].n.b !== k);
+    }
   }
 
   function applyView() {
@@ -862,13 +906,10 @@ const UI = (() => {
         <button class="btn sm" id="opt-lb">Bestenliste öffnen</button>
       </div>
       <h2 class="sec" style="margin-top:26px">Spielstand</h2>
-      <div class="save-note">
-        <div class="sn-ico">✓</div>
-        <div>
-          <div class="ol">Wird automatisch gespeichert</div>
-          <div class="od">Alle paar Sekunden und immer, wenn du den Reiter schließt.
-            Du musst nichts weiter tun. <span id="sv-when"></span></div>
-        </div>
+      <div class="opt-row">
+        <div><div class="ol"><i class="dot-ok"></i>Wird automatisch gespeichert</div>
+          <div class="od">Alle paar Sekunden und beim Verlassen der Seite.
+            <span id="sv-when"></span></div></div>
       </div>
       <div class="opt-row">
         <div><div class="ol">Sicherung</div>
@@ -894,7 +935,8 @@ const UI = (() => {
       ['particles', 'Partikel', 'Sporen und Funken. Ausschalten spart Leistung.'],
       ['ticker', 'Waldmeldungen', 'Kleine Textzeilen unter den Strukturen.'],
       ['offline', 'Offline-Wachstum', 'Rechnet Zeit an, in der das Spiel geschlossen war.'],
-      ['confirmPrestige', 'Nachfrage vor Reset', 'Fragt vor Sporenflug und Symbiose nach.']
+      ['confirmPrestige', 'Nachfrage vor Reset', 'Fragt vor Sporenflug und Symbiose nach.'],
+      ['autoBoard', 'Bestenliste aktuell halten', 'Trägt deinen Stand von selbst ein, höchstens alle 90 Sekunden.']
     ];
     rows.forEach(([k, name, d]) => {
       const r = U.el('div', 'opt-row', `<div><div class="ol">${name}</div><div class="od">${d}</div></div>
@@ -906,6 +948,16 @@ const UI = (() => {
       };
       opts.appendChild(r);
     });
+    const mr = U.el('div', 'opt-row', `<div><div class="ol">Musik</div>
+      <div class="od">Ein ruhiger Klangteppich, der live erzeugt wird — er wiederholt sich nie.</div></div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <input type="range" id="mus-vol" min="0" max="100" step="1" value="${Math.round(S.opt.musicVol * 100)}">
+        <span class="switch ${S.opt.music ? 'on' : ''}" id="mus-sw"></span>
+      </div>`);
+    U.$('#mus-sw', mr).onclick = e => { e.target.classList.toggle('on', Music.umschalten()); refreshTop(); };
+    U.$('#mus-vol', mr).oninput = e => { S.opt.musicVol = +e.target.value / 100; Music.lautstaerke(S.opt.musicVol); };
+    opts.appendChild(mr);
+
     const nr = U.el('div', 'opt-row', `<div><div class="ol">Zahlenformat</div>
       <div class="od">Kurz: 1,25 Mrd · Wissenschaftlich: 1.25e9</div></div>
       <div style="display:flex;gap:6px"><button class="chip" data-n="kurz">Kurz</button>
@@ -919,7 +971,10 @@ const UI = (() => {
 
     U.$('#opt-name').value = S.name || '';
     const nameIn = U.$('#opt-name');
-    const saveName = e => { S.name = e.target.value.trim().slice(0, 22); };
+    const saveName = e => {
+      const neuName = e.target.value.trim().slice(0, 22);
+      if (neuName && neuName !== S.name) { S.name = neuName; LB.resetAuto(); Save.write(); }
+    };
     nameIn.onchange = saveName; nameIn.onblur = saveName;
     U.$('#opt-lb').onclick = () => Game.showLeaderboard();
 
@@ -939,8 +994,8 @@ const UI = (() => {
     };
     U.$('#keys').innerHTML = `
       <b>1 – 8</b> Struktur kaufen &nbsp;·&nbsp; <b>M</b> alle kaufbaren Strukturen kaufen &nbsp;·&nbsp;
-      <b>Leertaste</b> nähren (klicken) &nbsp;·&nbsp; <b>Q W E R T Z</b> Reiter wechseln &nbsp;·&nbsp;
-      <b>P</b> Sporenflug &nbsp;·&nbsp; <b>Y</b> Symbiose &nbsp;·&nbsp; <b>S</b> speichern`;
+      <b>Leertaste</b> nähren &nbsp;·&nbsp; <b>P</b> Sporenflug &nbsp;·&nbsp; <b>S</b> Symbiose
+      <br><span style="opacity:.7">Speichern braucht keine Taste — das läuft von allein.</span>`;
   }
 
   function refreshOpt() {
@@ -948,7 +1003,7 @@ const UI = (() => {
     const e = U.$('#sv-when');
     if (!e || !S.lastSave) return;
     const sek = Math.max(0, (Date.now() - S.lastSave) / 1000);
-    setText(e, sek < 3 ? 'Gerade eben gespeichert.' : 'Zuletzt vor ' + U.fmtTimeShort(sek) + ' gespeichert.');
+    setText(e, sek < 3 ? 'Gerade eben gesichert.' : 'Zuletzt vor ' + U.fmtTimeShort(sek) + '.');
   }
 
   /* ================= Kopfzeile ================= */
@@ -967,6 +1022,7 @@ const UI = (() => {
     pw.classList.toggle('hidden', !E.symUnlocked() && S.spLife === 0);
     U.$('#t-sp').textContent = U.fmtInt(S.sp);
     U.$('#btn-sound').classList.toggle('off', !S.opt.sound);
+    U.$('#btn-music').classList.toggle('off', !S.opt.music);
     refreshBuffs();
   }
 

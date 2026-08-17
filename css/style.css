@@ -489,15 +489,94 @@ input[type=text]:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3
 .tlink.on{opacity:.6}
 .tcore text.lvl{font-size:9.5px;letter-spacing:2px}
 
-/* ============ Spielstand-Hinweis ============ */
-.save-note{display:flex;gap:14px;align-items:flex-start;padding:15px 17px;max-width:820px;
-  background:rgba(24,52,40,.55);border:1px solid rgba(79,224,160,.32);border-radius:var(--r);margin-bottom:9px}
-.save-note .sn-ico{width:26px;height:26px;border-radius:50%;background:rgba(79,224,160,.18);
-  color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.save-note .od{max-width:600px}
+/* ============ Spielstand ============ */
+.dot-ok{width:7px;height:7px;border-radius:50%;background:var(--acc);display:inline-block;
+  margin-right:9px;box-shadow:0 0 8px var(--acc);vertical-align:middle}
 #sv-when{color:var(--dim2)}
 input[type=file]{color:var(--dim);font-size:13px;font-family:inherit}
 input[type=file]::file-selector-button{background:rgba(30,58,46,.8);border:1px solid var(--line-str);
   border-radius:var(--r-s);padding:8px 14px;color:var(--txt);font-family:inherit;font-size:13px;
   margin-right:12px;cursor:pointer}
 input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(--acc)}
+
+/* ============ Spielstand-Plätze auf dem Startbildschirm ============ */
+.slot-list{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;text-align:left;
+  animation:riseIn 1s ease .8s both}
+.slot{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--r);
+  background:var(--panel);border:1px solid var(--line-str);cursor:pointer;transition:.16s;
+  backdrop-filter:blur(10px)}
+.slot:hover{border-color:var(--acc);transform:translateY(-1px);
+  box-shadow:0 6px 24px rgba(79,224,160,.15);background:rgba(24,48,38,.85)}
+.slot.leer{border-style:dashed;border-color:var(--line);background:rgba(10,20,16,.5)}
+.slot.leer .slot-name{color:var(--dim)}
+.slot.leer:hover{border-color:var(--acc);border-style:solid}
+.slot-main{flex:1;min-width:0}
+.slot-name{font-weight:700;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot-sub{font-size:12px;color:var(--dim);margin-top:3px;line-height:1.5}
+.slot-sub b{color:var(--lime)}
+.slot-go{color:var(--acc);font-size:19px;opacity:.65;flex-shrink:0}
+.slot-del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;color:var(--dim2);
+  font-size:17px;line-height:1;flex-shrink:0;transition:.15s}
+.slot-del:hover{color:var(--danger);border-color:rgba(239,107,107,.4);background:rgba(90,30,30,.4)}
+.nm-hint{color:var(--danger);font-size:12.5px;min-height:18px;margin-top:-4px}
+
+/* ============ Bestenliste: Spalten und Einzelheiten ============ */
+.lb-head{display:flex;gap:10px;align-items:center;padding:0 13px 6px;font-size:10.5px;
+  letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2)}
+.lb-row{cursor:pointer}
+.lb-row:hover{background:rgba(79,224,160,.09)}
+.lb-row.open{background:rgba(79,224,160,.12);border-radius:var(--r-s) var(--r-s) 0 0}
+.lb-head .lbv,.lb-row .lbv{width:88px;flex-shrink:0;font-size:12.5px}
+.lb-row .lbv b{color:var(--lime)}
+.lb-head .dim,.lb-row .dim{color:var(--dim);width:74px}
+.lb-more{width:16px;flex-shrink:0;color:var(--dim2);font-size:11px;transition:transform .2s}
+.lb-row.open .lb-more{transform:rotate(180deg);color:var(--acc)}
+.lb-detail{display:none;padding:12px 14px 14px;background:rgba(0,0,0,.32);
+  border-radius:0 0 var(--r-s) var(--r-s);margin-top:-5px}
+.lb-detail.on{display:block;animation:tabIn .22s ease}
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px}
+.lb-grid div{display:flex;flex-direction:column;gap:2px}
+.lb-grid span{font-size:10.5px;color:var(--dim);letter-spacing:.6px}
+.lb-grid b{font-size:14px;color:var(--txt)}
+@media(max-width:700px){
+  .lb-head .dim,.lb-row .dim{display:none}
+  .lb-head .lbv,.lb-row .lbv{width:66px;font-size:11.5px}
+}
+
+/* ============ Scrollleisten ============ */
+/* Die Reiter-Zeile darf waagerecht scrollen (schmale Bildschirme), aber
+   niemals eine Leiste zeigen - sie sass sonst sichtbar am rechten Rand. */
+#tabs{scrollbar-width:none;-ms-overflow-style:none}
+#tabs::-webkit-scrollbar{display:none;width:0;height:0}
+.lb-list,#toasts,.node-panel{scrollbar-width:thin;scrollbar-color:rgba(79,224,160,.3) transparent}
+.node-panel::-webkit-scrollbar,.lb-list::-webkit-scrollbar{width:6px}
+.node-panel::-webkit-scrollbar-thumb,.lb-list::-webkit-scrollbar-thumb{
+  background:rgba(79,224,160,.25);border-radius:4px}
+.node-panel::-webkit-scrollbar-track,.lb-list::-webkit-scrollbar-track{background:transparent}
+.tab-panel{scrollbar-width:thin;scrollbar-color:rgba(79,224,160,.25) transparent}
+
+/* ============ Skillbaum: Kategorien sichtbar ============ */
+.branch-seg{pointer-events:none;transition:opacity .3s;opacity:.6}
+.tree-wrap:hover .branch-seg{opacity:.55}
+.branch-seg.hell{opacity:1}          /* Legende hebt den Ast hervor */
+.branch-tag{pointer-events:none}
+.bt-ic{font-size:19px;text-anchor:middle;opacity:.85}
+.branch-label{font-size:13px;font-weight:700;letter-spacing:3px;text-anchor:middle;opacity:.9;
+  text-transform:uppercase}
+.tnode.gedimmt{opacity:.16;transition:opacity .25s}
+/* Querverbindungen sind auch ungekauft schwach zu sehen - das Netz ist da,
+   es leuchtet nur noch nicht */
+.tweave{opacity:.07}
+.tweave.on{opacity:.34}
+
+/* ============ Lautstärkeregler ============ */
+input[type=range]{-webkit-appearance:none;appearance:none;width:120px;height:4px;border-radius:3px;
+  background:rgba(0,0,0,.5);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--acc);cursor:pointer;box-shadow:0 0 10px rgba(79,224,160,.5)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--acc);
+  border:none;cursor:pointer;box-shadow:0 0 10px rgba(79,224,160,.5)}
+@media(pointer:coarse){
+  input[type=range]{height:8px;width:140px}
+  input[type=range]::-webkit-slider-thumb{width:24px;height:24px}
+}

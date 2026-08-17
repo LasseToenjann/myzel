@@ -12,6 +12,8 @@ der [Spielanleitung](SPIELANLEITUNG.md), die inhaltliche Begründung im
 - [Skillbaum](#skillbaum)
 - [Balance und ihre Fallen](#balance-und-ihre-fallen)
 - [Oberfläche und das Flackern](#oberfläche-und-das-flackern)
+- [Spielstand-Plätze](#spielstand-plätze)
+- [Musik](#musik)
 - [Bestenliste](#bestenliste)
 - [Suchmaschinen](#suchmaschinen)
 - [Testen](#testen)
@@ -54,6 +56,7 @@ Gespielt wird auf kleinen Bildschirmen; der Desktop ist die Zugabe.
 | `js/engine.js` | der gesamte Rechenweg, Käufe, Prestige, Erfolge, Offline |
 | `js/fx.js` | wachsendes Hintergrund-Myzel, Partikel, Toasts, Klänge, goldene Sporen |
 | `js/ui.js` | alle Reiter, der Skillbaum als SVG, die Kopfzeile |
+| `js/music.js` | Klangteppich: Akkordfolge, Tropfentöne, Filter, Echo |
 | `js/leaderboard.js` | globale Bestenliste |
 | `js/main.js` | Startbildschirm, Spielschleife, Modale, Tasten |
 
@@ -97,16 +100,39 @@ drei extra.
 
 ## Skillbaum
 
-72 Knoten in sechs Ästen, radial angeordnet: `D.nodePos()` rechnet Ring und Platz
-in Koordinaten um (Radius `105 + Ring × 82`, Winkel je Ast). Gezeichnet wird als
-SVG, verschoben und gezoomt über eine `transform` auf der Gruppe.
+72 Knoten in sechs Ästen. **Radiales Baumlayout**: Jeder Ast belegt einen festen
+Kreisausschnitt von 48°, innerhalb dessen Geschwister den Platz im Verhältnis zu
+ihrer Zweiggröße aufteilen (`blaetter()`). Dadurch überlappt nichts — der kleinste
+Knotenabstand liegt bei 74 px bei 42–50 px breiten Knoten — und eine Gabelung bleibt
+bis nach außen sichtbar.
+
+Die frühere Fassung rechnete den Winkel nur aus Ast und Platz, und die Streuung
+*sank* nach außen. Ergebnis waren sechs gerade Speichen; jede Gabelung lief wieder
+zur Astachse zusammen.
+
+Die Struktur steht als lesbare Tabelle `PARENT` in `data.js` — jeder Ast gabelt sich
+einmal. Ein Sicherheitsnetz meldet Kreisbezüge. `LAYOUT` überschreibt Ring und Platz
+der Automatik-Knoten, damit die acht Autokäufer als zwei parallele Linien stehen
+statt als eine lange Kette.
+
+**Kategorien sichtbar machen**: Jeder Ast bekommt ein eingefärbtes Kreissegment als
+Hintergrund (radialer Verlauf, nach außen auslaufend). Die Legende hebt beim
+Überfahren den zugehörigen Ast hervor und dimmt die übrigen.
+
+**Vernetzung**: 21 Querverbindungen (`WEAVES`) zwischen benachbarten Ästen. Sie sind
+auch ungekauft schwach zu sehen — das Netz ist da, es leuchtet nur noch nicht — und
+werden hell, sobald beide Enden gekauft sind.
 
 Die Kosten vergibt `data.js` **systematisch**, nicht von Hand: Der Ring bestimmt
 den Grundpreis (`RING_BASE`), das Wachstum ergibt sich aus der Stufenzahl
 (`1 + 1,2 / max`) — die letzte Stufe kostet dadurch immer rund das 3,2-fache der
-ersten. Der ganze Baum kostet etwa **2 250 Punkte**.
+ersten. Wichtig: Die Kostenvergabe läuft **nach** dem Umsortieren, sonst passt sie
+nicht zum tatsächlichen Ring. Der ganze Baum kostet etwa **2 550 Punkte**.
 
-Äußere Ringe tragen `sym: n` und öffnen sich erst mit *n* erschlossenen Biomen.
+**Freischaltung.** Neben `sym: n` (Biome) gibt es die Tabelle `GATE`: `struct: i`
+verlangt eine freigeschaltete Struktur, `spore: true` mindestens einen Sporenflug.
+Ohne das ließen sich Sporen-Boni kaufen, lange bevor es Sporen gibt — Punkte, die
+ins Leere gehen. `E.gateReason()` liefert den Klartext, der im Knotenfenster steht.
 
 ## Balance und ihre Fallen
 
@@ -152,6 +178,38 @@ Werte setzen — und zwar über die Helfer `setText()`, `setHTML()` und `setW()`
 nur schreiben, wenn sich der Inhalt tatsächlich geändert hat. Eingabefelder werden
 nie überschrieben, solange sie den Fokus haben.
 
+## Spielstand-Plätze
+
+Drei Plätze unter `myzel_platz_1` bis `myzel_platz_3`, dazu `myzel_letzter_platz`.
+Der alte Einzelspielstand (`myzel_save_v1`) wandert beim ersten Start automatisch auf
+Platz 1 — `Save.migriere()` erledigt das, niemand verliert Fortschritt.
+
+`Save.slots()` liefert die Kurzinfos für den Startbildschirm, ohne den ganzen
+Spielstand zu laden. Jeder Platz hat eine eigene Bestenlisten-Kennung (`S.pid`),
+weshalb zwei Plätze auch zwei Einträge in der Rangliste erzeugen.
+
+Der Name ist **Pflicht**: Er wird beim Anlegen abgefragt, weil sich das Spiel von
+selbst in die Bestenliste einträgt und ein leerer Name dort nichts taugt.
+
+## Musik
+
+Live erzeugt statt aus einer Datei — eine Aufnahme wären mehrere Megabyte, die
+zudem hörbar in Schleife liefen. Aufbau in `js/music.js`:
+
+- drei Dauerstimmen (je zwei leicht verstimmte Schwingungen, das ergibt eine
+  Schwebung) durch ein Tiefpassfilter bei 700 Hz
+- ein sehr langsamer Oszillator (0,033 Hz) bewegt die Filterfrequenz, damit der
+  Klang nicht steht
+- eine Akkordfolge aus sechs Stufen wechselt alle 15–22 Sekunden weich
+- darüber einzelne Tropfentöne aus der A-Moll-Pentatonik alle 3,5–10 Sekunden
+- ein Echo (0,42 s, Rückführung 0,34) ersetzt einen Hall
+
+Kein Halbtonschritt im Tonvorrat, dadurch klingt nichts spannungsgeladen. Die
+Lautstärke wird quadriert, weil das dem Höreindruck besser entspricht.
+
+Gestartet wird erst beim Eintritt ins Spiel — vorher verbieten Browser das Abspielen
+ohne Zutun der Nutzenden.
+
 ## Bestenliste
 
 `js/leaderboard.js`, global über [textdb.online](https://textdb.online) — derselbe
@@ -169,6 +227,16 @@ Feldnamen (`i n l b s p d`), weil alles zusammen in einem Textfeld liegt.
 Jeder Spielstand hat eine dauerhafte Kennung (`S.pid`), damit erneutes Senden den
 eigenen Eintrag *aktualisiert* statt einen zweiten anzulegen. Beim Schreiben laufen
 bis zu drei Versuche, weil gleichzeitige Zugriffe sich sonst überschreiben können.
+
+Gesendet wird **automatisch** (`LB.autoSubmit()`, angestoßen vom Speichertakt):
+höchstens alle 90 Sekunden und nur, wenn sich Reifegrad, Größenordnung der Biomasse
+oder Symbiose-Punkte geändert haben. Sonst entstünde bei jedem Tick ein Netzzugriff.
+Abschaltbar über `S.opt.autoBoard`.
+
+Ein Eintrag trägt: Kennung, Name, Reifegrad, Biomasse, Symbiose-Punkte, Sporenflüge,
+Zeitpunkt, Spielzeit, Erfolge, Skill-Stufen, Biome, beste Produktion, goldene Sporen
+und Prüfungsstufen. In der Liste stehen die wichtigsten Spalten, der Rest erscheint
+beim Antippen einer Zeile.
 Ist der Dienst nicht erreichbar, zeigt das Spiel den zuletzt geladenen Stand aus
 `localStorage` — es wartet nie auf eine Antwort.
 

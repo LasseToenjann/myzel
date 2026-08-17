@@ -1,5 +1,32 @@
 # Änderungsverlauf
 
+## v1.2 – Spielstände, Musik, Bestenliste mit Einzelheiten
+
+**Drei Spielstand-Plätze**
+- Der Startbildschirm zeigt jetzt drei Plätze nebeneinander: belegte zum Weiterspielen mit Name, Reifegrad, Biomasse und Spielzeit, freie zum Anlegen. Jeder Platz lässt sich einzeln löschen.
+- Ein vorhandener Einzelspielstand wandert beim ersten Start automatisch auf Platz 1 — niemand verliert Fortschritt.
+- Beim Anlegen wird der **Name abgefragt** und ist Pflicht. Grund: Das Spiel trägt sich von selbst in die Bestenliste ein, und ein leerer Name taugt dort nichts.
+
+**Bestenliste**
+- Der Stand wird **automatisch** eingetragen — höchstens alle 90 Sekunden und nur, wenn sich etwas geändert hat. Abschaltbar in den Optionen.
+- Die Liste zeigt jetzt Reifegrad, Biomasse, Sporenflüge und Biome nebeneinander. **Eine Zeile antippen** klappt alles Weitere auf: beste Produktion, Symbiose-Punkte, Skill-Stufen, Erfolge, Prüfungsstufen, goldene Sporen, Spielzeit und wann zuletzt gespielt wurde.
+
+**Musik**
+- Ein ruhiger Klangteppich, der **live erzeugt** wird statt aus einer Datei zu kommen: drei Dauerstimmen mit Schwebung, eine Akkordfolge aus sechs Stufen, einzelne Tropfentöne aus der A-Moll-Pentatonik, dazu Tiefpassfilter und Echo. Er wiederholt sich nie.
+- Eigener Knopf in der Kopfzeile, Lautstärkeregler in den Optionen. Getrennt von den Klängen bei Klicks und Käufen.
+
+**Skillbaum: klarer erkennbar**
+- Jeder Ast liegt jetzt auf einem **eingefärbten Kreissegment** — damit ist auf einen Blick klar, was wozu gehört. Die Legende hebt beim Überfahren den Ast hervor und dimmt die übrigen.
+- Von 9 auf **21 Querverbindungen** erhöht. Sie sind auch ungekauft schwach zu sehen: Das Netz ist da, es leuchtet nur noch nicht.
+- Ast-Beschriftungen tragen jetzt das Zeichen des Astes.
+
+**Kleinigkeiten**
+- Die Reiter-Zeile zeigte am rechten Rand eine Scrollleiste. Sie ist ausgeblendet, das waagerechte Scrollen auf schmalen Bildschirmen bleibt.
+- Der Hinweis zum automatischen Speichern war als grüner Kasten deutlich klobiger als alles daneben — er sieht jetzt aus wie die übrigen Zeilen.
+- Tasten aufgeräumt: **`S` löst die Symbiose aus**. Die Speichern-Taste ist weg, weil ohnehin automatisch gespeichert wird, und die Reiter-Tasten `Q W E R T Z` sind entfallen.
+- Einzahl statt Plural bei „Noch 1 Wachstumspunkt nötig".
+
+
 ## v1.1 – Skillbaum neu aufgesetzt, globale Bestenliste, Touch
 
 **Skillbaum: Anordnung**

@@ -8,6 +8,13 @@ Spielen: https://lassetoenjann.github.io/myzel/
 
 ---
 
+## Anfangen
+
+Auf dem Startbildschirm liegen **drei Plätze** nebeneinander. Ein freier Platz legt
+ein neues Myzel an, ein belegter führt es weiter. Beim Anlegen fragt das Spiel nach
+einem **Namen** — unter dem stehst du in der weltweiten Bestenliste, und ändern kannst
+du ihn jederzeit in den Optionen. Jeder Platz hat seine eigene Bestenlisten-Kennung.
+
 ## In einer Minute
 
 1. **Nähren** anklicken. Das gibt Biomasse.
@@ -69,6 +76,10 @@ den laufenden Durchlauf zurück; abbrechen geht jederzeit.
   AUTO-Knopf rechts oben in der Zeile).
 - Der **Skillbaum lässt sich jederzeit zurücksetzen** — ohne Verlust. Ausprobieren
   kostet nichts.
+- Ein Knoten, der **gesperrt** ist, sagt auch warum. Sporen-Boni etwa gibt es erst
+  nach dem ersten Sporenflug — vorher würden sie ins Leere gehen.
+- **Musik**: ein ruhiger Klangteppich, der laufend neu entsteht und sich nie
+  wiederholt. Über das ♫ oben rechts oder mit Regler in den Optionen.
 
 ## Tasten
 
@@ -77,22 +88,25 @@ den laufenden Durchlauf zurück; abbrechen geht jederzeit.
 | `1` – `8` | Struktur kaufen |
 | `M` | alles Kaufbare kaufen |
 | `Leertaste` | nähren |
-| `Q W E R T Z` | Reiter wechseln |
 | `P` | Sporenflug |
-| `Y` | Symbiose |
-| `S` | speichern |
+| `S` | Symbiose |
 
 ## Spielstand
 
-Gespeichert wird automatisch alle 12 Sekunden im Browser dieses Geräts — kein Konto
-nötig. Unter **Optionen → Spielstand** lässt er sich als Text oder Datei sichern und
-auf einem anderen Gerät wieder einlesen.
+Gespeichert wird **automatisch** — alle paar Sekunden und beim Verlassen der Seite.
+Du musst nichts tun, und es gibt keine Speichern-Taste. Unter **Optionen → Spielstand**
+lässt sich eine Sicherung als Datei ablegen und auf einem anderen Gerät wieder
+einlesen.
 
 ## Bestenliste
 
-Trag unter **Optionen** einen Namen ein und klicke in der Bestenliste auf „Ergebnis
-senden". Erst dann geht etwas ins Netz. Sortiert wird nach Reifegrad, bei
-Gleichstand nach der insgesamt erzeugten Biomasse.
+Dein Stand wird **von selbst eingetragen**, höchstens alle 90 Sekunden und nur, wenn
+sich etwas geändert hat. Abschalten geht in den Optionen.
+
+Sortiert wird nach Reifegrad, bei Gleichstand nach der insgesamt erzeugten Biomasse.
+Eine Zeile antippen zeigt alles Weitere: beste Produktion, Sporenflüge,
+Symbiose-Punkte, Biome, Skill-Stufen, Erfolge, Prüfungsstufen, goldene Sporen,
+Spielzeit und wann zuletzt gespielt wurde.
 
 ## Wie lange dauert das?
 

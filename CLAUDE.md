@@ -79,6 +79,9 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 1.1 — Skillbaum als radiales Baumlayout mit Gabelungen, Verwebungen und
-Freischalt-Bedingungen; globale Bestenliste über textdb.online; Touch-Bedienung
-für Tablet und Handy.
+Version 1.2 — drei Spielstand-Plätze mit Namenspflicht, automatischer Eintrag in die
+Bestenliste samt Detailansicht, live erzeugte Musik, Skillbaum mit eingefärbten
+Kreissegmenten je Ast und 21 Querverbindungen.
+
+Tasten: `S` löst die Symbiose aus. Eine Taste fürs Speichern gibt es bewusst nicht —
+das läuft automatisch.

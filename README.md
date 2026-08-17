@@ -5,9 +5,9 @@ Du zersetzt, wächst, verzweigst dich — und irgendwann durchziehst du ganze Bi
 
 **Spielen:** https://lassetoenjann.github.io/myzel/
 
-Läuft komplett im Browser, ohne Konto und ohne Installation. Der Spielstand liegt
-lokal im Browser und lässt sich als Text sichern. Nur die Bestenliste geht ins Netz
-— und auch die erst, wenn man dort auf „Ergebnis senden" klickt.
+Läuft komplett im Browser, ohne Konto und ohne Installation. Drei Spielstand-Plätze,
+automatisches Speichern, globale Bestenliste und ein ruhiger Klangteppich, der live
+erzeugt wird.
 
 ---
 
@@ -41,6 +41,10 @@ du tust, du gehst immer vorwärts.
 | 5 | **Symbiose** (Meta-Prestige) → 8 Biome | öffnet gesperrte Ringe im Baum |
 | — | Prüfungen, 59 Erfolge, Autokäufer, Offline-Wachstum | Nebenziele und Komfort |
 
+Der Skillbaum ist als radialer Baum angelegt: Jeder Ast belegt ein eingefärbtes
+Kreissegment, gabelt sich einmal und führt beide Zweige nach außen. Querverbindungen
+zwischen benachbarten Ästen leuchten auf, sobald beide Enden gekauft sind.
+
 ## Steuerung
 
 | Taste | Wirkung |
@@ -48,10 +52,8 @@ du tust, du gehst immer vorwärts.
 | `1` – `8` | Struktur kaufen |
 | `M` | alles Kaufbare kaufen |
 | `Leertaste` | nähren (klicken) |
-| `Q W E R T Z` | Reiter wechseln |
 | `P` | Sporenflug |
-| `Y` | Symbiose |
-| `S` | speichern |
+| `S` | Symbiose |
 
 Auf Tablet und Handy: ziehen zum Verschieben, zwei Finger zum Zoomen,
 Doppeltipp setzt die Baumansicht zurück.
@@ -68,6 +70,7 @@ js/state.js         Spielstand: anlegen, speichern, laden, migrieren
 js/engine.js        Spiellogik: Werte berechnen, Ticken, Kaufen, Prestige
 js/fx.js            wachsendes Hintergrund-Myzel, Partikel, Toasts, Ton
 js/ui.js            alle Reiter und der Skillbaum
+js/music.js         ruhiger Klangteppich, live erzeugt
 js/leaderboard.js   globale Bestenliste über textdb.online
 js/main.js          Startbildschirm, Spielschleife, Tasten
 ```

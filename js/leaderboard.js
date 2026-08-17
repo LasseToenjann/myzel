@@ -3,7 +3,7 @@
    Globale Rangliste über textdb.online - denselben kostenlosen
    Key-Value-Speicher nutzt auch der Wahlwächter.
 
-   Lesen:    GET https://textdb.online/<key>
+   Lesen:     GET https://textdb.online/<key>
    Schreiben: GET https://textdb.online/update/?key=<key>&value=<json>
 
    Es gibt kein Konto und keine Rechte: Wer den Schlüssel kennt, kann
@@ -20,13 +20,19 @@ const LB = (() => {
   const LOCAL_KEY = 'myzel_board_v1';
   const MAX = 50;
   const TIMEOUT_MS = 8000;
+  const AUTO_MS = 90000;          // frühestens alle 90 s von selbst senden
 
   /* ---------- Speicherformat ----------
-     Kurze Feldnamen, weil alle Einträge zusammen in einem Textfeld liegen:
-     i = Kennung, n = Name, l = Reifegrad, b = Biomasse gesamt,
-     s = Symbiose-Punkte, p = Sporenflüge, d = Zeitpunkt              */
-  const pack = e => ({ i: e.id, n: e.name, l: e.level, b: e.bio, s: e.sp, p: e.pres, d: e.date });
-  const unpack = p => ({ id: p.i, name: p.n, level: p.l || 0, bio: p.b || 0, sp: p.s || 0, pres: p.p || 0, date: p.d || 0 });
+     Kurze Feldnamen, weil alle Einträge zusammen in einem Textfeld liegen. */
+  const pack = e => ({
+    i: e.id, n: e.name, l: e.level, b: e.bio, s: e.sp, p: e.pres, d: e.date,
+    t: e.playTime, a: e.ach, k: e.nodes, m: e.biomes, r: e.rate, g: e.golds, c: e.chall
+  });
+  const unpack = p => ({
+    id: p.i, name: p.n, level: p.l || 0, bio: p.b || 0, sp: p.s || 0, pres: p.p || 0,
+    date: p.d || 0, playTime: p.t || 0, ach: p.a || 0, nodes: p.k || 0,
+    biomes: p.m || 0, rate: p.r || 0, golds: p.g || 0, chall: p.c || 0
+  });
 
   /** Reifegrad zählt zuerst, bei Gleichstand die gesamte Biomasse. */
   const sortList = list => list.sort((a, b) => (b.level - a.level) || (b.bio - a.bio));
@@ -63,8 +69,8 @@ const LB = (() => {
 
   /* ---------- öffentliche Schnittstelle ---------- */
 
-  /** Dauerhafte Kennung, damit ein erneutes Senden den eigenen Eintrag
-      aktualisiert, statt einen zweiten anzulegen. */
+  /** Dauerhafte Kennung je Spielstand. Ohne sie legte jedes Senden einen
+      neuen Eintrag an, statt den eigenen zu aktualisieren. */
   function playerId() {
     if (!S.pid) S.pid = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     return S.pid;
@@ -78,7 +84,14 @@ const LB = (() => {
       bio: S.lifetime,
       sp: S.spLife,
       pres: S.prestiges,
-      date: Date.now()
+      date: Date.now(),
+      playTime: Math.round(S.playTime),
+      ach: S.ach.length,
+      nodes: E.nodeLevelSum(),
+      biomes: S.biomes.length,
+      rate: Math.round(S.stats.bestRate),
+      golds: S.stats.golds,
+      chall: E.challTierSum()
     };
   }
 
@@ -96,9 +109,9 @@ const LB = (() => {
 
   /** Ergebnis eintragen. Mehrere Versuche, weil sich gleichzeitige
       Schreibzugriffe sonst gegenseitig überschreiben könnten. */
-  async function submit() {
+  async function submit(versuche) {
     const me = myEntry();
-    for (let versuch = 0; versuch < 3; versuch++) {
+    for (let versuch = 0; versuch < (versuche || 3); versuch++) {
       try {
         const list = sortList(await read());
         const idx = list.findIndex(e => e.id === me.id);
@@ -109,9 +122,9 @@ const LB = (() => {
           return { ok: true, list: sortiert, me, inListe: false };   // zu wenig für die Liste
         }
         await write(sortiert);
-        const geprüft = sortList(await read());
-        if (geprüft.some(e => e.id === me.id && e.level === me.level)) {
-          return { ok: true, list: geprüft, me, inListe: true };
+        const geprueft = sortList(await read());
+        if (geprueft.some(e => e.id === me.id && e.level === me.level)) {
+          return { ok: true, list: geprueft, me, inListe: true };
         }
       } catch (e) { /* nächster Versuch */ }
       await new Promise(r => setTimeout(r, 400 + Math.random() * 1400));
@@ -120,5 +133,26 @@ const LB = (() => {
     return { ok: false, list: ersatz, me, inListe: ersatz.some(e => e.id === me.id) };
   }
 
-  return { fetchList, submit, myEntry, playerId, MAX };
+  /* ---------- automatisch senden ----------
+     Der Eintrag soll von allein aktuell bleiben. Gesendet wird aber nur,
+     wenn sich auch etwas geändert hat, und höchstens alle 90 Sekunden -
+     sonst entstünde bei jedem Tick ein Netzzugriff. */
+  let letzterStand = '', letzterZeitpunkt = 0, laeuft = false;
+
+  function autoSubmit() {
+    if (!S || !S.name || !S.opt.autoBoard) return;
+    if (laeuft || Date.now() - letzterZeitpunkt < AUTO_MS) return;
+    const stand = S.level + '|' + Math.round(Math.log10(S.lifetime + 1) * 100) + '|' + S.spLife;
+    if (stand === letzterStand) return;
+    laeuft = true;
+    letzterZeitpunkt = Date.now();
+    submit(1).then(r => { if (r.ok) letzterStand = stand; })
+      .catch(() => {})
+      .then(() => { laeuft = false; });
+  }
+
+  /** Nach einem Namenswechsel soll sofort wieder gesendet werden dürfen. */
+  function resetAuto() { letzterStand = ''; letzterZeitpunkt = 0; }
+
+  return { fetchList, submit, autoSubmit, resetAuto, myEntry, playerId, MAX };
 })();

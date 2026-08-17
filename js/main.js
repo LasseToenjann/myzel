@@ -29,40 +29,73 @@ const Game = (() => {
 
   /* ================= Startbildschirm ================= */
   function initStart() {
-    const info = U.$('#start-save-info');
-    const data = Save.peek();
-    if (data) {
-      U.$('#btn-continue').classList.remove('hidden');
-      const lv = data.level || 0;
-      const ago = U.fmtTimeShort((Date.now() - (data.lastSave || Date.now())) / 1000);
-      info.innerHTML = `Gespeichertes Myzel · Reifegrad <b style="color:var(--lime)">${lv}</b> ·
-        ${U.fmt(data.lifetime || 0)} Biomasse gesamt · zuletzt vor ${ago}`;
-    } else {
-      info.textContent = 'Noch kein Spielstand auf diesem Gerät.';
-    }
-
-    U.$('#btn-continue').onclick = () => { if (Save.load()) enter(false); };
-    U.$('#btn-new').onclick = () => {
-      if (Save.has()) {
-        confirmBox('Neues Myzel beginnen?', 'Der vorhandene Spielstand wird überschrieben. Du kannst ihn vorher in den Optionen exportieren.',
-          () => { Save.newGame(); enter(true); }, 'Neu beginnen', true);
-      } else { Save.newGame(); enter(true); }
-    };
-    U.$('#btn-import-start').onclick = () => {
-      modal(`<h3>Spielstand laden</h3><p>Füge den exportierten Text ein.</p>
-        <textarea class="save-area" id="imp-a" style="max-width:none"></textarea>
-        <div class="mrow"><button class="btn ghost" id="i-no">Abbrechen</button>
-        <button class="btn btn-primary" id="i-yes">Laden</button></div>`, m => {
-        U.$('#i-no', m).onclick = close;
-        U.$('#i-yes', m).onclick = () => {
-          const v = U.$('#imp-a', m).value.trim();
-          if (v && Save.importStr(v)) { close(); enter(false); }
-          else FX.toast('Fehlerhafter Spielstand', 'Der Text konnte nicht gelesen werden.', '');
-        };
-      });
-    };
+    zeichnePlaetze();
     U.$('#btn-board-start').onclick = () => showLeaderboard(true);
     U.$('#btn-about').onclick = showAbout;
+  }
+
+  /** Die drei Plätze als Liste - belegte zum Weiterspielen, leere zum Anlegen. */
+  function zeichnePlaetze() {
+    const box = U.$('#slot-list');
+    const plaetze = Save.slots();
+    box.innerHTML = '';
+    plaetze.forEach(pl => {
+      const row = U.el('div', 'slot' + (pl.leer ? ' leer' : ''));
+      if (pl.leer) {
+        row.innerHTML = `<div class="slot-main">
+            <div class="slot-name">Platz ${pl.nr} — frei</div>
+            <div class="slot-sub">Hier ein neues Myzel anlegen</div>
+          </div><div class="slot-go">+</div>`;
+        row.onclick = () => neuesMyzel(pl.nr);
+      } else {
+        const her = pl.lastSave ? U.fmtTimeShort((Date.now() - pl.lastSave) / 1000) : '?';
+        row.innerHTML = `<div class="slot-main">
+            <div class="slot-name">${escapeHtml(pl.name)}</div>
+            <div class="slot-sub">Reifegrad <b>${pl.level}</b> · ${U.fmt(pl.lifetime)} Biomasse
+              · ${U.fmtTimeShort(pl.playTime)} gespielt · vor ${her}</div>
+          </div>
+          <button class="slot-del" title="Diesen Platz löschen">×</button>
+          <div class="slot-go">▸</div>`;
+        row.onclick = ev => {
+          if (ev.target.closest('.slot-del')) return;
+          if (Save.load(pl.nr)) enter(false);
+        };
+        row.querySelector('.slot-del').onclick = ev => {
+          ev.stopPropagation();
+          confirmBox('Platz ' + pl.nr + ' löschen?',
+            `<b>${escapeHtml(pl.name)}</b> — Reifegrad ${pl.level}, ${U.fmt(pl.lifetime)} Biomasse.
+             Das lässt sich nicht rückgängig machen.`,
+            () => { Save.loesche(pl.nr); zeichnePlaetze(); }, 'Löschen', true);
+        };
+      }
+      box.appendChild(row);
+    });
+  }
+
+  /** Neues Spiel - der Name wird vorher abgefragt, weil er in der
+      Bestenliste steht und sich das Spiel automatisch dorthin einträgt. */
+  function neuesMyzel(nr) {
+    modal(`<h3>Wie soll dein Myzel heißen?</h3>
+      <p>Unter diesem Namen erscheinst du in der weltweiten Bestenliste.
+      Ändern kannst du ihn später jederzeit in den Optionen.</p>
+      <input type="text" id="nm-name" maxlength="22" placeholder="z. B. Waldgeflecht" autocomplete="off">
+      <div class="nm-hint" id="nm-hint"></div>
+      <div class="mrow"><button class="btn ghost" id="nm-no">Abbrechen</button>
+      <button class="btn btn-primary" id="nm-ok">Wachsen lassen</button></div>`, m => {
+      const inp = U.$('#nm-name', m), hint = U.$('#nm-hint', m);
+      setTimeout(() => inp.focus(), 60);
+      const start = () => {
+        const n = inp.value.trim();
+        if (n.length < 2) { hint.textContent = 'Bitte mindestens zwei Zeichen.'; inp.focus(); return; }
+        close();
+        Save.newGame(n, nr);
+        enter(true);
+      };
+      U.$('#nm-no', m).onclick = close;
+      U.$('#nm-ok', m).onclick = start;
+      inp.onkeydown = e => { if (e.key === 'Enter') start(); };
+      inp.oninput = () => { hint.textContent = ''; };
+    });
   }
 
   function showAbout() {
@@ -90,6 +123,7 @@ const Game = (() => {
     U.$('#game').classList.remove('hidden');
     document.body.classList.add('in-game');
     afterLoad(isNew);
+    Music.start();
     if (isNew) setTimeout(showAbout, 900);
   }
 
@@ -197,37 +231,58 @@ const Game = (() => {
     modal(`<h3>Bestenliste</h3><p>Wird geladen …</p>`);
     const { list, online } = await LB.fetchList();
     const mineId = (S && S.pid) || '';
-    const zeilen = list.slice(0, 25).map((e, i) => `
-      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === mineId ? 'me' : ''}">
-        <span class="r">${i + 1}</span><span class="n">${escapeHtml(e.name)}</span>
-        <span class="lv">${U.fmt(e.bio)} Biomasse${e.sp > 0 ? ' · ' + U.fmtInt(e.sp) + ' SP' : ''}</span>
-        <span class="s">Reifegrad ${e.level}</span></div>`).join('');
+
+    const zeile = (e, i) => `
+      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === mineId ? 'me' : ''}" data-i="${i}">
+        <span class="r">${i + 1}</span>
+        <span class="n">${escapeHtml(e.name)}</span>
+        <span class="lbv">Reifegrad <b>${e.level}</b></span>
+        <span class="lbv">${U.fmt(e.bio)}</span>
+        <span class="lbv dim">${e.pres} Flüge</span>
+        <span class="lbv dim">${e.biomes}/8 Biome</span>
+        <span class="lb-more">▾</span>
+      </div>
+      <div class="lb-detail" data-d="${i}"></div>`;
+
     modal(`<h3>Bestenliste</h3>
       <p>${online
-        ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse.'
+        ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse. Zeile antippen für Einzelheiten.'
         : 'Die Rangliste ist gerade nicht erreichbar — hier steht der zuletzt geladene Stand.'}</p>
-      <div class="lb-list">${zeilen || '<p style="opacity:.6">Noch keine Einträge. Sei der erste.</p>'}</div>
-      ${fromStart || !S ? '' : `<input type="text" id="lb-name" maxlength="22" placeholder="Name deines Myzels" value="${escapeHtml(S.name || '')}">`}
-      <div class="mrow">
-        <button class="btn ghost" id="lb-close">Schließen</button>
-        ${fromStart || !S ? '' : '<button class="btn btn-primary" id="lb-send">Ergebnis senden</button>'}
-      </div>`, m => {
+      <div class="lb-head"><span class="r">#</span><span class="n">Myzel</span>
+        <span class="lbv">Stand</span><span class="lbv">Biomasse</span>
+        <span class="lbv dim">Flüge</span><span class="lbv dim">Biome</span><span class="lb-more"></span></div>
+      <div class="lb-list">${list.slice(0, 30).map(zeile).join('') || '<p style="opacity:.6">Noch keine Einträge. Sei der erste.</p>'}</div>
+      <div class="mrow"><button class="btn ghost" id="lb-close">Schließen</button></div>`, m => {
       U.$('#lb-close', m).onclick = close;
-      const b = U.$('#lb-send', m);
-      if (b) b.onclick = async () => {
-        const n = U.$('#lb-name', m).value.trim();
-        if (!n) return FX.toast('Name fehlt', 'Trag einen Namen ein, unter dem du in der Liste stehst.', '');
-        S.name = n.slice(0, 22);
-        b.disabled = true; b.textContent = 'Sende …';
-        const r = await LB.submit();
-        Save.write();
-        close();
-        if (r.ok && r.inListe) FX.toast('Eingetragen', `Reifegrad ${S.level} · ${U.fmt(S.lifetime)} Biomasse`, 'lime');
-        else if (r.ok) FX.toast('Noch nicht in den besten ' + LB.MAX, 'Wachse weiter und sende erneut.', '');
-        else FX.toast('Rangliste nicht erreichbar', 'Versuch es später noch einmal.', '');
-      };
+      U.$$('.lb-row', m).forEach(row => {
+        row.onclick = () => {
+          const i = +row.dataset.i, e = list[i];
+          const d = U.$(`.lb-detail[data-d="${i}"]`, m);
+          const offen = d.classList.toggle('on');
+          row.classList.toggle('open', offen);
+          if (offen && !d.innerHTML) {
+            const zeit = e.date ? U.fmtTimeShort((Date.now() - e.date) / 1000) + ' her' : 'unbekannt';
+            d.innerHTML = `<div class="lb-grid">
+              ${detail('Reifegrad', e.level)}
+              ${detail('Biomasse gesamt', U.fmt(e.bio))}
+              ${detail('Beste Produktion', U.fmt(e.rate) + ' /s')}
+              ${detail('Sporenflüge', U.fmtInt(e.pres))}
+              ${detail('Symbiose-Punkte', U.fmtInt(e.sp))}
+              ${detail('Biome', e.biomes + ' / 8')}
+              ${detail('Skill-Stufen', U.fmtInt(e.nodes))}
+              ${detail('Erfolge', e.ach + ' / 59')}
+              ${detail('Prüfungsstufen', e.chall + ' / 12')}
+              ${detail('Goldene Sporen', U.fmtInt(e.golds))}
+              ${detail('Spielzeit', U.fmtTimeShort(e.playTime))}
+              ${detail('Zuletzt aktiv', zeit)}
+            </div>`;
+          }
+        };
+      });
     });
   }
+  const detail = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`;
+
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
   /* ================= Ereignisse aus der Engine ================= */
@@ -283,13 +338,12 @@ const Game = (() => {
       UI.refreshTabs();
     }
     saveAcc += dt;
-    if (saveAcc >= 12) { saveAcc = 0; Save.write(); }
+    if (saveAcc >= 12) { saveAcc = 0; Save.write(); LB.autoSubmit(); }
     requestAnimationFrame(loop);
   }
 
   /* ================= Tasten ================= */
   function initKeys() {
-    const tabKeys = { q: 'netz', w: 'baum', e: 'sporen', r: 'symbiose', t: 'pruefung', z: 'erfolge' };
     window.addEventListener('keydown', ev => {
       if (!S || U.$('#game').classList.contains('hidden')) return;
       const tag = (ev.target.tagName || '').toLowerCase();
@@ -299,9 +353,7 @@ const Game = (() => {
       else if (k === 'm') { let any = 0; for (let i = 7; i >= 0; i--) any += E.buy(i); if (any) { FX.sfx.buy(); UI.refreshTab(); } }
       else if (k === ' ') { ev.preventDefault(); const g = E.doClick(true); FX.pop(FX.W / 2, FX.H / 2, '+' + U.fmt(g)); FX.sfx.click(); }
       else if (k === 'p') prestige();
-      else if (k === 'y') symbiose();
-      else if (k === 's') { Save.write(); FX.toast('Gespeichert', '', 'lime', 1600); }
-      else if (tabKeys[k]) UI.show(tabKeys[k]);
+      else if (k === 's') symbiose();   // gespeichert wird automatisch, die Taste ist frei
       else if (k === 'escape') close();
     });
   }
@@ -312,6 +364,7 @@ const Game = (() => {
     initStart();
     initKeys();
     U.$('#btn-sound').onclick = () => { S.opt.sound = !S.opt.sound; UI.refreshTop(); if (S.opt.sound) FX.sfx.click(); };
+    U.$('#btn-music').onclick = () => { Music.umschalten(); UI.refreshTop(); };
     U.$('#btn-menu').onclick = () => UI.show('optionen');
     window.addEventListener('beforeunload', () => { if (S) Save.write(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });

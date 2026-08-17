@@ -132,6 +132,25 @@ const LB = (() => {
     return { ok: false, list: ersatz, me, inListe: ersatz.some(e => e.id === me.id) };
   }
 
+  /** Benennt einen Eintrag in der Rangliste um - anhand der festen Kennung.
+      Ohne das hiesse ein umbenannter Spielstand dort weiter beim alten Namen. */
+  async function umbenennen(pid, name) {
+    if (!pid) return false;
+    for (let versuch = 0; versuch < 2; versuch++) {
+      try {
+        const list = sortList(await read());
+        const idx = list.findIndex(e => e.id === pid);
+        if (idx < 0) return true;                 // steht noch gar nicht drin
+        list[idx].name = String(name).slice(0, 22);
+        await write(list);
+        localSave(list);
+        return true;
+      } catch (e) { /* nächster Versuch */ }
+      await new Promise(r => setTimeout(r, 500));
+    }
+    return false;
+  }
+
   /* ---------- automatisch senden ----------
      Der Eintrag soll von allein aktuell bleiben. Gesendet wird aber nur,
      wenn sich auch etwas geändert hat, und höchstens alle 90 Sekunden -
@@ -153,5 +172,5 @@ const LB = (() => {
   /** Nach einem Namenswechsel soll sofort wieder gesendet werden dürfen. */
   function resetAuto() { letzterStand = ''; letzterZeitpunkt = 0; }
 
-  return { fetchList, submit, autoSubmit, resetAuto, myEntry, playerId, MAX };
+  return { fetchList, submit, autoSubmit, resetAuto, umbenennen, myEntry, playerId, MAX };
 })();

@@ -79,7 +79,8 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 1.8 — ohne Prüfungen, Kern zeigt den Reifegrad, Optionen nur hinter dem
+Version 2.2 — kein Tutorial mehr (Erklärungen erscheinen beim Freischalten), drei
+Spielstand-Plätze mit Umbenennen, Bestenliste oben in der Statistik. Davor: ohne Prüfungen, Kern zeigt den Reifegrad, Optionen nur hinter dem
 Menü, Musik startet aus. Davor: Baum mit Nebel: sichtbar ist nur das Erreichbare, die Ansicht passt
 sich selbst ein, kein Zurücksetzen mehr. Davor: jeder Ast mit eigener Wege- und Knotenform, Kreis neu sortiert,
 keine Legende mehr. Davor: Ast-Segmente wachsen mit dem Ausbau sichtbar nach außen. Davor:

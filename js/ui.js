@@ -10,7 +10,7 @@ const UI = (() => {
     { id: 'sporen', name: 'Sporen', vis: () => S.sporeLife > 0 || S.prestiges > 0 || S.lifetime >= 1e8 },
     { id: 'symbiose', name: 'Symbiose', vis: () => E.symUnlocked() },
     { id: 'erfolge', name: 'Erfolge', vis: () => true },
-    { id: 'statistik', name: 'Statistik', vis: () => S.playTime > 120 },
+    { id: 'statistik', name: 'Statistik', vis: () => true },
     { id: 'optionen', name: 'Optionen', vis: () => false }   // nur über das Menü oben rechts
   ];
 
@@ -22,6 +22,7 @@ const UI = (() => {
   function setW(el, pct) { const v = pct.toFixed(1) + '%'; if (el && el.style.width !== v) el.style.width = v; }
 
   let active = 'netz';
+  let vorherigerReiter = 'netz';
   const built = {};
   const R = {};             // DOM-Referenzen
   let selNode = null;
@@ -54,6 +55,7 @@ const UI = (() => {
     const t = TABS.find(x => x.id === id);
     if (!t) return;
     if (!t.vis() && id !== 'optionen') return;   // Optionen liegen hinter dem Menü
+    if (id !== 'optionen') vorherigerReiter = id;
     active = id;
     if (!S.seenTabs.includes(id)) S.seenTabs.push(id);
     const dot = t.el.querySelector('.dot'); if (dot) dot.remove();
@@ -880,55 +882,114 @@ const UI = (() => {
 
   /* ================= REITER: STATISTIK ================= */
   function buildStat() {
-    panel('statistik').innerHTML = `<h2 class="sec">Statistik</h2><div class="stat-grid" id="stats"></div>`;
+    panel('statistik').innerHTML = `
+      <h2 class="sec">Bestenliste</h2>
+      <p class="hint" id="lb-info">Sortiert nach Reifegrad, bei Gleichstand nach der gesamten
+        Biomasse. Zeile antippen für Einzelheiten.</p>
+      <div class="lb-list" id="lb-box"><p style="opacity:.6">Wird geladen …</p></div>
+      <div class="lb-knoepfe">
+        <button class="btn sm" id="lb-mehr">Ganze Liste</button>
+        <button class="btn sm ghost" id="lb-neu">Neu laden</button>
+      </div>
+      <h2 class="sec" style="margin-top:32px">Dein Myzel</h2>
+      <div id="stats"></div>`;
     R.statGrid = U.$('#stats');
+    R.lbBox = U.$('#lb-box');
+    R.lbAlle = false;
+    U.$('#lb-neu').onclick = () => ladeBestenliste(true);
+    U.$('#lb-mehr').onclick = () => {
+      R.lbAlle = !R.lbAlle;
+      setText(U.$('#lb-mehr'), R.lbAlle ? 'Nur die besten fünf' : 'Ganze Liste');
+      ladeBestenliste();
+    };
+    ladeBestenliste();
   }
+
+  /* Vier Gruppen statt achtzehn gleichrangiger Kacheln - so ist auf einen
+     Blick klar, was zusammengehört. */
+  function statGruppen() {
+    return [
+      ['Gerade eben', [
+        ['Biomasse', U.fmt(S.biomass)],
+        ['Produktion', U.fmt(E.total) + ' /s'],
+        ['Multiplikator', U.fmtMul(E.m.global) + (E.m.global >= E.softcap.at ? ' (gedämpft)' : '')],
+        ['Strukturen', U.fmtInt(E.structsTotal())]
+      ]],
+      ['Insgesamt', [
+        ['Reifegrad', S.level],
+        ['Biomasse gesamt', U.fmt(S.lifetime)],
+        ['Beste Produktion', U.fmt(S.stats.bestRate) + ' /s'],
+        ['Spielzeit', U.fmtTime(S.playTime)]
+      ]],
+      ['Skillbaum und Sporen', [
+        ['Wachstumspunkte', `${U.fmtInt(E.wpAvail())} frei / ${U.fmtInt(E.wpTotal())}`],
+        ['Skill-Stufen', U.fmtInt(E.nodeLevelSum())],
+        ['Sporen gesammelt', U.fmtInt(S.sporeLife)],
+        ['Sporenflüge', U.fmtInt(S.prestiges)],
+        ['Symbiose-Punkte', U.fmtInt(S.spLife)],
+        ['Biome', `${S.biomes.length} / ${D.BIOMES.length}`]
+      ]],
+      ['Nebenbei', [
+        ['Erfolge', `${S.ach.length} / ${D.ACH.length}`],
+        ['Klicks', U.fmtInt(S.stats.clicks)],
+        ['Goldene Sporen', U.fmtInt(S.stats.golds)],
+        ['Begonnen am', new Date(S.stats.started).toLocaleDateString('de-DE')]
+      ]]
+    ];
+  }
+
   function refreshStat() {
     if (!built.statistik) return;
-    const rows = [
-      ['Biomasse jetzt', U.fmt(S.biomass)],
-      ['Produktion', U.fmt(E.total) + ' /s'],
-      ['Biomasse gesamt', U.fmt(S.lifetime)],
-      ['Dieser Durchlauf', U.fmt(S.runTotal)],
-      ['Reifegrad', S.level],
-      ['Wachstumspunkte', `${U.fmtInt(E.wpAvail())} frei / ${U.fmtInt(E.wpTotal())}`],
-      ['Skill-Stufen gekauft', U.fmtInt(E.nodeLevelSum())],
-      ['Strukturen gesamt', U.fmtInt(E.structsTotal())],
-      ['Produktions-Multiplikator', U.fmtMul(E.m.global) + (E.m.global >= E.softcap.at ? ' (gedämpft)' : '')],
-      ['Sporen gesamt', U.fmtInt(S.sporeLife)],
-      ['Sporenflüge', U.fmtInt(S.prestiges)],
-      ['Symbiose-Punkte', U.fmtInt(S.spLife)],
-      ['Klicks', U.fmtInt(S.stats.clicks)],
-      ['Goldene Sporen', U.fmtInt(S.stats.golds)],
-      ['Erfolge', `${S.ach.length} / ${D.ACH.length}`],
-      ['Beste Produktion', U.fmt(S.stats.bestRate) + ' /s'],
-      ['Spielzeit', U.fmtTime(S.playTime)],
-      ['Begonnen am', new Date(S.stats.started).toLocaleDateString('de-DE')]
-    ];
-    if (!R.statCells || R.statCells.length !== rows.length) {
-      R.statGrid.innerHTML = rows.map(r =>
-        `<div class="stat-card"><div class="sl">${r[0]}</div><div class="sv"></div></div>`).join('');
+    const gruppen = statGruppen();
+    if (!R.statCells) {
+      R.statGrid.innerHTML = gruppen.map(([titel, zeilen]) => `
+        <div class="stat-gruppe"><div class="sg-titel">${titel}</div>
+          <div class="stat-grid">${zeilen.map(z =>
+            `<div class="stat-card"><div class="sl">${z[0]}</div><div class="sv"></div></div>`).join('')}
+          </div></div>`).join('');
       R.statCells = U.$$('.sv', R.statGrid);
     }
-    rows.forEach((r, i) => setText(R.statCells[i], r[1]));
+    let i = 0;
+    gruppen.forEach(([, zeilen]) => zeilen.forEach(z => setText(R.statCells[i++], z[1])));
+  }
+
+  /** Bestenliste in den Statistik-Reiter zeichnen. */
+  async function ladeBestenliste(neuLaden) {
+    if (!R.lbBox) return;
+    if (neuLaden) setHTML(R.lbBox, '<p style="opacity:.6">Wird geladen …</p>');
+    const { list, online } = await LB.fetchList();
+    if (!R.lbBox) return;
+    const meine = (S && S.pid) || '';
+    if (!list.length) {
+      setHTML(R.lbBox, '<p style="opacity:.6">Noch keine Einträge. Sei der erste.</p>');
+      return;
+    }
+    setHTML(U.$('#lb-info'), online
+      ? 'Sortiert nach Reifegrad, bei Gleichstand nach der gesamten Biomasse. Zeile antippen für Einzelheiten.'
+      : 'Gerade nicht erreichbar — hier steht der zuletzt geladene Stand.');
+    R.lbBox.innerHTML = list.slice(0, R.lbAlle ? 25 : 5).map((e, i) => `
+      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.id && e.id === meine ? 'me' : ''}" data-i="${i}">
+        <span class="r">${i + 1}</span><span class="n">${Game.escape(e.name)}</span>
+        <span class="lbv">Reifegrad <b>${e.level}</b></span><span class="lb-more">▾</span>
+      </div><div class="lb-detail" data-d="${i}"></div>`).join('');
+    U.$$('.lb-row', R.lbBox).forEach(row => {
+      row.onclick = () => {
+        const i = +row.dataset.i, e = list[i];
+        const d = U.$(`.lb-detail[data-d="${i}"]`, R.lbBox);
+        const offen = d.classList.toggle('on');
+        row.classList.toggle('open', offen);
+        if (offen && !d.innerHTML) d.innerHTML = Game.lbDetail(e);
+      };
+    });
   }
 
   /* ================= REITER: OPTIONEN ================= */
   function buildOpt() {
     const p = panel('optionen');
     p.innerHTML = `
+      <button class="btn sm zurueck" id="opt-back">← Zurück zum Menü</button>
       <h2 class="sec">Einstellungen</h2>
       <div id="opts"></div>
-      <h2 class="sec" style="margin-top:26px">Name</h2>
-      <div class="opt-row name-row">
-        <div style="min-width:170px">
-          <div class="ol">Name deines Myzels</div>
-          <div class="od">Unter diesem Namen stehst du in der weltweiten Bestenliste.
-            Dein Stand wird von selbst eingetragen — abschalten kannst du das oben.</div>
-        </div>
-        <input type="text" id="opt-name" maxlength="22" placeholder="z. B. Waldgeflecht">
-        <button class="btn sm" id="opt-lb">Bestenliste öffnen</button>
-      </div>
       <h2 class="sec" style="margin-top:26px">Spielstand</h2>
       <div class="opt-row">
         <div><div class="ol"><i class="dot-ok"></i>Wird automatisch gespeichert</div>
@@ -953,6 +1014,7 @@ const UI = (() => {
       <div class="hint" id="keys"></div>
       <div class="hint" style="opacity:.6;margin-top:20px">MYZEL — Das stille Netz · v1.0</div>`;
 
+    U.$('#opt-back').onclick = () => Game.zumMenue();
     const opts = U.$('#opts');
     const rows = [
       ['particles', 'Partikel', 'Sporen und Funken. Ausschalten spart Leistung.'],
@@ -1004,15 +1066,6 @@ const UI = (() => {
     });
     U.$$('.chip', nr).forEach(x => x.classList.toggle('active', x.dataset.n === S.opt.notation));
     opts.appendChild(nr);
-
-    U.$('#opt-name').value = S.name || '';
-    const nameIn = U.$('#opt-name');
-    const saveName = e => {
-      const neuName = e.target.value.trim().slice(0, 22);
-      if (neuName && neuName !== S.name) { S.name = neuName; LB.resetAuto(); Save.write(); }
-    };
-    nameIn.onchange = saveName; nameIn.onblur = saveName;
-    U.$('#opt-lb').onclick = () => Game.showLeaderboard();
 
     U.$('#sv-file').onclick = () => {
       Save.write();

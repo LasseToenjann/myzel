@@ -44,6 +44,7 @@ const Save = (() => {
       goldTimer: 130,
       lastSave: Date.now(),
       seenTabs: [],
+      seenTips: [],
       stats: { clicks: 0, golds: 0, offlineRuns: 0, maxIdle: 0, bestSpores: 0, bestRate: 0, started: Date.now(), fastest: 0 },
       opt: { sound: true, notation: 'kurz', particles: true, offline: true, ticker: true,
         confirmPrestige: true, autoBoard: true, music: false, musicVol: 0.5, sfxVol: 0.6 }
@@ -135,6 +136,11 @@ const Save = (() => {
     write();
   }
 
+  /** Schreibt Daten in einen bestimmten Platz, ohne ihn zu laden. */
+  function schreibePlatz(i, daten) {
+    try { localStorage.setItem(slotKey(i), U.encode(daten)); return true; } catch (e) { return false; }
+  }
+
   function loesche(i) {
     try { localStorage.removeItem(slotKey(i)); } catch (e) {}
   }
@@ -164,5 +170,5 @@ const Save = (() => {
   function wipe() { loesche(aktiv); }
 
   return { fresh, load, newGame, write, has, peek, exportStr, importStr, wipe,
-    slots, loesche, setzeAktiv, letzterPlatz, get aktiv() { return aktiv; }, SLOT_COUNT };
+    slots, loesche, schreibePlatz, setzeAktiv, letzterPlatz, get aktiv() { return aktiv; }, SLOT_COUNT };
 })();

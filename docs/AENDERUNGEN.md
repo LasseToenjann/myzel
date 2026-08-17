@@ -1,5 +1,26 @@
 # Änderungsverlauf
 
+## v2.2 – Aufgeräumt: kein Tutorial, klarere Wege, Statistik mit Rangliste
+
+**Erklärungen statt Tutorial**
+- Das Fenster „Worum geht es?" ist weg. Ein Absatz mit fünf nummerierten Sätzen vorweg liest niemand, und danach ist er verschwunden.
+- Stattdessen erklärt sich **jede neue Sache im Moment ihres Auftauchens** — einmalig, als kurze Meldung: die erste Struktur, der erste Wachstumspunkt, die erste goldene Spore, der erste Autokäufer, der erste mögliche Sporenflug, die Symbiose, das Offline-Wachstum.
+
+**Startbildschirm**
+- Die Zeilen der Spielstände sind sauber ausgerichtet: Umbenennen, Löschen und Pfeil gleich groß und mittig.
+- **Umbenennen** ist neu — und zieht den Namen über die feste Kennung auch in der Bestenliste nach, sonst stünde der Spielstand dort weiter unter dem alten.
+- Fußzeile und der Knopf „Über das Spiel" sind entfallen.
+
+**Statistik**
+- Die **Bestenliste steht jetzt oben** — zunächst die besten fünf, auf Knopfdruck die ganze Liste. Darunter erst die eigenen Werte.
+- Die eigenen Werte sind in vier Gruppen sortiert (*Gerade eben*, *Insgesamt*, *Skillbaum und Sporen*, *Nebenbei*) statt achtzehn gleichrangiger Kacheln.
+- Der Reiter ist von Anfang an sichtbar.
+
+**Optionen**
+- Liegen nur noch hinter dem Menü oben rechts und haben einen **Rückweg ins Startmenü**, um den Spielstand zu wechseln.
+- Der Namensbereich ist entfallen — umbenannt wird am Spielstand selbst.
+
+
 ## v1.8 – Prüfungen raus, Kern zeigt den Fortschritt
 
 **Prüfungen entfernt**

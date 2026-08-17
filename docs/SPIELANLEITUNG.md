@@ -10,10 +10,14 @@ Spielen: https://lassetoenjann.github.io/myzel/
 
 ## Anfangen
 
-Auf dem Startbildschirm liegen **drei Plätze** nebeneinander. Ein freier Platz legt
+Auf dem Startbildschirm liegen **drei Plätze** untereinander. Ein freier Platz legt
 ein neues Myzel an, ein belegter führt es weiter. Beim Anlegen fragt das Spiel nach
-einem **Namen** — unter dem stehst du in der weltweiten Bestenliste, und ändern kannst
-du ihn jederzeit in den Optionen. Jeder Platz hat seine eigene Bestenlisten-Kennung.
+einem **Namen** — unter dem stehst du in der weltweiten Bestenliste. Umbenennen und
+Löschen gehen über die beiden Zeichen rechts in der Zeile; das Umbenennen zieht auch
+in der Bestenliste nach.
+
+Es gibt keine Einführung vorweg: Jede neue Sache erklärt sich in dem Moment, in dem
+sie zum ersten Mal auftaucht.
 
 ## In einer Minute
 
@@ -51,6 +55,12 @@ gesammelten Sporen bleibt beim Kaufen erhalten.
 **Biome**: dauerhafte Boni, die zusätzlich die äußeren Ringe im Skillbaum öffnen.
 
 **Erfolge** — 59 Stück, jeder gibt dauerhaft **+2 %** Produktion.
+
+**Statistik** — Oben die Bestenliste (die besten fünf, auf Knopfdruck alle), darunter
+deine eigenen Werte in vier Gruppen.
+
+Die **Optionen** liegen hinter den drei Strichen oben rechts; von dort kommst du auch
+zurück ins Startmenü, um den Spielstand zu wechseln.
 
 ## Die sechs Äste
 

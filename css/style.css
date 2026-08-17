@@ -69,7 +69,6 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .start-menu{display:flex;flex-direction:column;gap:11px;align-items:center;animation:riseIn 1s ease .8s both}
 .save-info{margin-top:16px;color:var(--dim2);font-size:12.5px;line-height:1.7;min-height:20px}
-.start-foot{margin-top:26px;color:var(--dim2);font-size:11.5px;opacity:.7}
 
 /* ============ Topbar ============ */
 #game{position:relative;z-index:5;height:100%;display:flex;flex-direction:column}
@@ -515,7 +514,7 @@ input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(-
 /* ============ Spielstand-Plätze auf dem Startbildschirm ============ */
 .slot-list{display:flex;flex-direction:column;gap:9px;margin-bottom:22px;text-align:left;
   animation:riseIn 1s ease .8s both}
-.slot{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--r);
+.slot{display:flex;align-items:center;gap:10px;padding:13px 14px 13px 18px;border-radius:var(--r);
   background:var(--panel);border:1px solid var(--line-str);cursor:pointer;transition:.16s;
   backdrop-filter:blur(10px)}
 .slot:hover{border-color:var(--acc);transform:translateY(-1px);
@@ -527,10 +526,16 @@ input[type=file]::file-selector-button:hover{border-color:var(--acc);color:var(-
 .slot-name{font-weight:700;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slot-sub{font-size:12px;color:var(--dim);margin-top:3px;line-height:1.5}
 .slot-sub b{color:var(--lime)}
-.slot-go{color:var(--acc);font-size:19px;opacity:.65;flex-shrink:0}
-.slot-del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;color:var(--dim2);
-  font-size:17px;line-height:1;flex-shrink:0;transition:.15s}
+/* Die drei Zeichen rechts: gleich groß, mittig, gleicher Abstand */
+.slot-ren,.slot-del{display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:9px;border:1px solid transparent;color:var(--dim2);
+  font-size:15px;line-height:1;flex-shrink:0;transition:.15s;padding:0}
+.slot-ren:hover{color:var(--acc);border-color:rgba(79,224,160,.4);background:rgba(20,50,38,.6)}
+.slot-del{font-size:18px}
 .slot-del:hover{color:var(--danger);border-color:rgba(239,107,107,.4);background:rgba(90,30,30,.4)}
+.slot-go{display:flex;align-items:center;justify-content:center;width:26px;height:32px;
+  color:var(--acc);font-size:17px;opacity:.6;flex-shrink:0}
+.slot:hover .slot-go{opacity:1}
 .nm-hint{color:var(--danger);font-size:12.5px;min-height:18px;margin-top:-4px}
 
 /* ============ Bestenliste: Spalten und Einzelheiten ============ */
@@ -645,35 +650,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .card.mut.can .cbtn b{color:#1a1400}
 .card.mut.maxed::after{top:11px;right:13px}
 
-/* ============ Einführung ============ */
-.intro-kopf{display:flex;gap:16px;align-items:center;margin-bottom:20px}
-.intro-mark{width:74px;height:74px;flex-shrink:0;
-  filter:drop-shadow(0 0 16px rgba(79,224,160,.45));animation:markAtem 4s ease-in-out infinite}
-@keyframes markAtem{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-.intro-kopf h3{margin-bottom:5px;font-size:21px}
-.intro-sub{font-size:13px;color:var(--dim);line-height:1.6;margin:0}
-.intro-schritte{display:flex;flex-direction:column;gap:8px}
-.ischritt{display:flex;gap:13px;align-items:flex-start;padding:11px 14px;border-radius:var(--r-s);
-  background:rgba(0,0,0,.26);border-left:2px solid var(--acc);
-  animation:ischrittAuf .5s ease backwards}
-@keyframes ischrittAuf{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
-.is-ic{font-size:20px;line-height:1.2;width:26px;text-align:center;flex-shrink:0}
-.ischritt b{display:block;font-size:14px;margin-bottom:2px}
-.ischritt span{font-size:12.5px;color:var(--dim);line-height:1.55}
-.intro-fuss{font-size:12.5px;color:var(--dim2);line-height:1.6;margin:18px 0 0;text-align:center}
-.intro .mrow{justify-content:center}
-.intro .mrow .btn{min-width:190px}
-@media(max-height:820px),(max-width:520px){
-  .intro-kopf{gap:12px;margin-bottom:14px}
-  .intro-mark{width:56px;height:56px}
-  .intro-kopf h3{font-size:18px}
-  .intro-sub{font-size:12px}
-  .intro-schritte{gap:6px}
-  .ischritt{padding:8px 12px;gap:10px}
-  .ischritt b{font-size:13px}
-  .ischritt span{font-size:11.5px;line-height:1.45}
-  .is-ic{font-size:17px;width:22px}
-  .intro-fuss{margin-top:12px;font-size:11.5px}
-  #modal-root{padding:12px}
-  .modal{padding:20px}
+
 }
+
+/* ============ Statistik: Gruppen ============ */
+.stat-gruppe{margin-bottom:22px}
+.sg-titel{font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim);
+  margin-bottom:9px;font-weight:600}
+.stat-card{padding:12px 14px}
+.stat-card .sv{font-size:18px}
+.btn.zurueck{margin-bottom:18px}
+.lb-knoepfe{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}

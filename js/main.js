@@ -30,8 +30,6 @@ const Game = (() => {
   /* ================= Startbildschirm ================= */
   function initStart() {
     zeichnePlaetze();
-    U.$('#btn-board-start').onclick = () => showLeaderboard(true);
-    U.$('#btn-about').onclick = showAbout;
   }
 
   /** Die drei Plätze als Liste - belegte zum Weiterspielen, leere zum Anlegen. */
@@ -54,12 +52,14 @@ const Game = (() => {
             <div class="slot-sub">Reifegrad <b>${pl.level}</b> · ${U.fmt(pl.lifetime)} Biomasse
               · ${U.fmtTimeShort(pl.playTime)} gespielt · vor ${her}</div>
           </div>
+          <button class="slot-ren" title="Umbenennen">✎</button>
           <button class="slot-del" title="Diesen Platz löschen">×</button>
           <div class="slot-go">▸</div>`;
         row.onclick = ev => {
-          if (ev.target.closest('.slot-del')) return;
+          if (ev.target.closest('.slot-del') || ev.target.closest('.slot-ren')) return;
           if (Save.load(pl.nr)) enter(false);
         };
+        row.querySelector('.slot-ren').onclick = ev => { ev.stopPropagation(); umbenennen(pl); };
         row.querySelector('.slot-del').onclick = ev => {
           ev.stopPropagation();
           confirmBox('Platz ' + pl.nr + ' löschen?',
@@ -69,6 +69,39 @@ const Game = (() => {
         };
       }
       box.appendChild(row);
+    });
+  }
+
+  /** Umbenennen. Zieht den Namen auch in der Bestenliste nach, sonst stünde
+      der Spielstand dort weiter unter dem alten. */
+  function umbenennen(pl) {
+    modal(`<h3>Myzel umbenennen</h3>
+      <p>Der neue Name gilt auch in der weltweiten Bestenliste.</p>
+      <input type="text" id="rn-name" maxlength="22" value="${escapeHtml(pl.name)}" autocomplete="off">
+      <div class="nm-hint" id="rn-hint"></div>
+      <div class="mrow"><button class="btn ghost" id="rn-no">Abbrechen</button>
+      <button class="btn btn-primary" id="rn-ok">Umbenennen</button></div>`, m => {
+      const inp = U.$('#rn-name', m), hint = U.$('#rn-hint', m), knopf = U.$('#rn-ok', m);
+      setTimeout(() => { inp.focus(); inp.select(); }, 60);
+      const los = async () => {
+        const n = inp.value.trim();
+        if (n.length < 2) { hint.textContent = 'Bitte mindestens zwei Zeichen.'; return; }
+        const daten = Save.peek(pl.nr);
+        if (!daten) return close();
+        daten.name = n.slice(0, 22);
+        Save.schreibePlatz(pl.nr, daten);
+        if (S && Save.aktiv === pl.nr) S.name = daten.name;
+        knopf.disabled = true; knopf.textContent = 'Moment …';
+        await LB.umbenennen(daten.pid, daten.name);
+        LB.resetAuto();
+        close();
+        zeichnePlaetze();
+        FX.toast('Umbenannt', 'Der Spielstand heißt jetzt „' + daten.name + '".', 'lime');
+      };
+      U.$('#rn-no', m).onclick = close;
+      knopf.onclick = los;
+      inp.onkeydown = e => { if (e.key === 'Enter') los(); };
+      inp.oninput = () => { hint.textContent = ''; };
     });
   }
 
@@ -98,48 +131,6 @@ const Game = (() => {
     });
   }
 
-  /** Kurze, bebilderte Einführung. Fünf Schritte statt eines Absatzes -
-      wer ein Spiel startet, liest keine Textwand. */
-  const SCHRITTE = [
-    ['\ud83c\udf31', 'N\u00e4hren', 'Antippen gibt Biomasse. Das ist der Anfang von allem.'],
-    ['\u2b22', 'Bauen', 'Von der Biomasse Strukturen kaufen \u2014 die arbeiten dann allein weiter.'],
-    ['\u2748', 'Reifen', 'Genug Biomasse bringt Reifegrad, und der gibt Punkte f\u00fcr den Skillbaum.'],
-    ['\u273a', 'Aufl\u00f6sen', 'Beim Sporenflug beginnst du neu \u2014 mit dauerhaftem Bonus.'],
-    ['\u262d', 'Verbinden', 'Zuletzt gehst du eine Symbiose mit ganzen Biomen ein.']
-  ];
-
-  function showAbout() {
-    modal(`<div class="intro">
-      <div class="intro-kopf">
-        <svg class="intro-mark" viewBox="0 0 120 120" aria-hidden="true">
-          <g fill="none" stroke="#4fe0a0" stroke-width="2.4" stroke-linecap="round">
-            <path d="M60 104 V64"/><path d="M60 76 L36 58"/><path d="M60 76 L84 58"/>
-            <path d="M60 64 L44 44"/><path d="M60 64 L76 44"/>
-          </g>
-          <g fill="#a6e85c">
-            <circle cx="60" cy="64" r="5"/><circle cx="36" cy="58" r="3.4"/>
-            <circle cx="84" cy="58" r="3.4"/><circle cx="44" cy="44" r="3"/><circle cx="76" cy="44" r="3"/>
-          </g>
-        </svg>
-        <div>
-          <h3>Du bist ein Myzel</h3>
-          <p class="intro-sub">Das Pilzgeflecht unter dem Waldboden. Du zersetzt, wächst
-            und verbindest dich mit allem, was im Boden liegt.</p>
-        </div>
-      </div>
-      <div class="intro-schritte">
-        ${SCHRITTE.map(([ic, t, d], i) => `
-          <div class="ischritt" style="animation-delay:${(0.12 + i * 0.09).toFixed(2)}s">
-            <span class="is-ic">${ic}</span>
-            <div><b>${t}</b><span>${d}</span></div>
-          </div>`).join('')}
-      </div>
-      <p class="intro-fuss">Es läuft weiter, wenn du schließt. Kein Verlust, keine
-        Zeitfenster, kein Druck — und gespeichert wird von allein.</p>
-      <div class="mrow"><button class="btn btn-primary" id="ab-ok">Los geht's</button></div>
-    </div>`, m => U.$('#ab-ok', m).onclick = close);
-  }
-
   /* ================= Eintritt ins Spiel ================= */
   function enter(isNew) {
     const ss = U.$('#start-screen');
@@ -149,7 +140,18 @@ const Game = (() => {
     document.body.classList.add('in-game');
     afterLoad(isNew);
     Music.start();
-    if (isNew) setTimeout(showAbout, 900);
+  }
+
+  /** Zurueck ins Startmenue, um den Spielstand zu wechseln.
+      Vorher wird gespeichert, damit nichts verloren geht. */
+  function zumMenue() {
+    Save.write();
+    Music.stop();
+    document.body.classList.remove('in-game');
+    U.$('#game').classList.add('hidden');
+    const ss = U.$('#start-screen');
+    ss.classList.remove('leaving', 'hidden');
+    zeichnePlaetze();
   }
 
   /** Nach jedem Laden/Import: alles neu aufbauen. */
@@ -298,7 +300,64 @@ const Game = (() => {
   }
   const detail = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`;
 
+  /** Einzelheiten eines Ranglisten-Eintrags - auch von der Statistik genutzt. */
+  function lbDetail(e) {
+    const zeit = e.date ? U.fmtTimeShort((Date.now() - e.date) / 1000) + ' her' : 'unbekannt';
+    return `<div class="lb-grid">
+      ${detail('Biomasse gesamt', U.fmt(e.bio))}
+      ${detail('Beste Produktion', U.fmt(e.rate) + ' /s')}
+      ${detail('Sporenflüge', U.fmtInt(e.pres))}
+      ${detail('Symbiose-Punkte', U.fmtInt(e.sp))}
+      ${detail('Biome', e.biomes + ' / 8')}
+      ${detail('Skill-Stufen', U.fmtInt(e.nodes))}
+      ${detail('Erfolge', e.ach + ' / 59')}
+      ${detail('Goldene Sporen', U.fmtInt(e.golds))}
+      ${detail('Spielzeit', U.fmtTimeShort(e.playTime))}
+      ${detail('Zuletzt aktiv', zeit)}
+    </div>`;
+  }
+
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  /* ================= Erklärungen genau dann, wenn sie gebraucht werden ====
+     Jede Erklärung erscheint genau einmal - beim ersten Auftauchen der
+     Sache. Ein Tutorial vorweg liest niemand, und danach ist es weg. */
+  const TIPPS = [
+    ['klick', () => true,
+      'Antippen gibt Biomasse', 'Davon kaufst du Strukturen — die arbeiten dann von allein weiter.'],
+    ['struktur', () => S.structs.some(v => v > 0),
+      'Deine erste Struktur', 'Sie erzeugt Biomasse, ohne dass du etwas tust. Je 25 Stück verdoppelt sich ihre Ausbeute.'],
+    ['punkt', () => E.wpAvail() > 0,
+      'Ein Wachstumspunkt', 'Reifegrad bringt Punkte für den Skillbaum. Der bleibt für immer — auch nach jedem Neuanfang.'],
+    ['baum', () => E.nodeLevelSum() > 0,
+      'Der Baum wächst', 'Sichtbar ist immer nur, was als Nächstes erreichbar ist. Jeder Ast steht für etwas anderes.'],
+    ['gold', () => S.stats.golds > 0,
+      'Goldene Sporen', 'Sie treiben ab und zu über den Bildschirm. Anklicken gibt einen zeitlich begrenzten Schub.'],
+    ['auto', () => E.m.auto.some(Boolean),
+      'Autokäufer', 'Kauft ab jetzt von selbst. Abschalten kannst du ihn je Struktur mit dem kleinen AUTO-Knopf.'],
+    ['sporen', () => E.sporeGain() >= 1,
+      'Sporenflug möglich', 'Du löst dich auf und beginnst neu — Biomasse und Strukturen gehen, alles andere bleibt. Die Sporen erhöhen dauerhaft deine Produktion.'],
+    ['mutation', () => S.sporen > 0,
+      'Mutationen', 'Von Sporen gekauft und für immer behalten. Der Bonus aus allen je gesammelten Sporen bleibt dabei unberührt.'],
+    ['symbiose', () => E.symUnlocked(),
+      'Die Symbiose ist offen', 'Die letzte Schicht: Sporen und Mutationen gehen, dafür erschließt du Biome — und die öffnen die äußeren Ringe im Skillbaum.'],
+    ['offline', () => S.stats.offlineRuns > 0,
+      'Es wächst auch ohne dich', 'Wie lange und wie ergiebig, bestimmst du im Ast Zersetzung.']
+  ];
+
+  function tippsPruefen() {
+    if (!S.seenTips) S.seenTips = [];
+    for (const [id, wenn, titel, text] of TIPPS) {
+      if (S.seenTips.includes(id)) continue;
+      let treffer = false;
+      try { treffer = wenn(); } catch (e) { treffer = false; }
+      if (!treffer) continue;
+      S.seenTips.push(id);
+      FX.toast(titel, text, 'lime', 9000);
+      FX.sfx.unlock();
+      return;                       // höchstens eine Erklärung auf einmal
+    }
+  }
 
   /* ================= Ereignisse aus der Engine ================= */
   function drainEvents() {
@@ -338,6 +397,7 @@ const Game = (() => {
     last = t;
     E.tick(dt);
     drainEvents();
+    tippsPruefen();
 
     // Netz-Wachstum an die Produktion koppeln
     FX.setGrowSpeed(0.25 + Math.min(3.2, Math.log10(Math.max(1, E.total)) * 0.42));
@@ -382,7 +442,8 @@ const Game = (() => {
     document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });
   }
 
-  return { boot, enter, afterLoad, prestige, symbiose, showLeaderboard, ladeSicherung, confirm: confirmBox, modal, close };
+  return { boot, enter, afterLoad, zumMenue, prestige, symbiose, showLeaderboard, ladeSicherung,
+    lbDetail, escape: escapeHtml, confirm: confirmBox, modal, close };
 })();
 
 window.addEventListener('DOMContentLoaded', Game.boot);

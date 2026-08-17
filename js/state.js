@@ -26,6 +26,7 @@ const Save = (() => {
       level: 0,
       sporen: 0,
       sporeLife: 0,
+      sporenGesamt: 0,    // Sporen ueber alle Symbiosen - sinkt nie
       muts: {},
       sp: 0,
       spLife: 0,
@@ -160,6 +161,11 @@ const Save = (() => {
     S.nodes = saubereTabelle(S.nodes, D.NODE_BY_ID);
     S.muts = saubereTabelle(S.muts, D.MUT_BY_ID);
     if (!S.lastSeen) S.lastSeen = S.lastSave || Date.now();
+
+    /* Den Gesamtzaehler gab es frueher nicht. Sicher ist mindestens der
+       aktuelle Bestand; was vor einer Symbiose gesammelt wurde, laesst sich
+       nicht mehr rekonstruieren - es stand nirgends. */
+    if ((S.sporenGesamt || 0) < S.sporeLife) S.sporenGesamt = S.sporeLife;
 
     /* Spielstände von vor der Aufbau-Anzeige kennen rateVorReset nicht. Wer
        zuletzt davor geflogen ist, steckt womöglich gerade im Wiederaufbau -

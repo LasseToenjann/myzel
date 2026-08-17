@@ -289,7 +289,10 @@ const E = (() => {
     const lv = S.muts[id] || 0;
     const maxed = lv >= mu.max;
     const cost = maxed ? Infinity : Math.ceil(D.mutCost(mu, lv) * m.mutCost);
-    return { mu, lv, maxed, cost, canBuy: !maxed && S.sporen >= cost };
+    /* Manche Mutationen tun dasselbe wie ein Skill, der es dauerhaft kann.
+       Wer den Skill hat, soll die Sporen nicht noch einmal ausgeben. */
+    const unnoetig = !maxed && typeof mu.unnoetig === 'function' && mu.unnoetig();
+    return { mu, lv, maxed, cost, unnoetig, canBuy: !maxed && !unnoetig && S.sporen >= cost };
   }
   function buyMut(id) {
     const st = mutState(id);
@@ -337,6 +340,7 @@ const E = (() => {
     const g = sporeGain();
     S.sporen += g;
     S.sporeLife += g;
+    S.sporenGesamt = (S.sporenGesamt || 0) + g;
     S.prestiges++;
     if (g > S.stats.bestSpores) S.stats.bestSpores = g;
     softReset(true);
@@ -360,9 +364,13 @@ const E = (() => {
     S.spLife += g;
     S.symResets++;
     S.sporen = 0;
-    S.sporeLife = 0;
+    S.sporeLife = 0;      // traegt den Produktions-Bonus, muss zurueck
     S.muts = {};
-    S.prestiges = 0;
+    /* S.prestiges bleibt stehen. Es ist ein Lebenszeit-Zaehler: Statistik,
+       Bestenliste, Platzuebersicht, die Erfolge "X Sporenfluege" und der Skill
+       "Waldgedaechtnis" lesen ihn. Auf null gesetzt machte er die Erfolge
+       unerreichbar und den Skill in dem Moment wertlos, in dem er sich
+       ueberhaupt erst freischaltet. */
     softReset(false);
     recalc();
     return g;

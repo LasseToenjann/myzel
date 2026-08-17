@@ -1,5 +1,57 @@
 # Änderungsverlauf
 
+## v2.7.0 – Die Symbiose wirft keine Lebenszeit-Zähler mehr weg
+
+`doSym()` setzte `S.prestiges = 0`. Betroffen war weit mehr als die Anzeige:
+
+| Was daran hing | Was passierte |
+|---|---|
+| Statistik, Bestenliste, Platzübersicht | *Sporenflüge* fiel auf 0 zurück |
+| Erfolge *50 / 200 / 1000 Sporenflüge* | wurden praktisch unerreichbar |
+| Erfolge *Sammle insgesamt X Sporen* | hingen an `sporeLife`, das beim Reset auf 0 muss |
+| Skill **Waldgedächtnis** (+2 % je Stufe **je Sporenflug**) | ist mit `sym: 1` freigeschaltet, also **erst nach der ersten Symbiose** — genau dann stand der Zähler auf 0. Der Skill war in dem Moment, in dem man ihn erstmals kaufen kann, exakt wertlos. |
+
+**Neu:**
+
+- `S.prestiges` sinkt nie mehr.
+- `S.sporenGesamt` zählt die Sporen über alle Symbiosen hinweg. Die Erfolge
+  *Sammle insgesamt X Sporen* und die Statistik lesen jetzt diesen Zähler.
+- `S.sporeLife` bleibt, was es war: der Bestand, der den Produktions-Bonus
+  trägt und bei der Symbiose zurückgeht. Steht in der Statistik als eigene
+  Zeile *davon seit der Symbiose*, sobald es eine gab.
+
+Spielstände, die vor dieser Fassung schon eine Symbiose hinter sich haben,
+lassen sich nicht heilen — die Zahlen standen nirgends mehr. Ab jetzt zählt es.
+
+**Zur Balance.** Weil *Waldgedächtnis* nun den echten Zähler liest, wird es zu
+einem ernsthaften Skill statt zu einer Falle. Gemessen an einem Spielstand kurz
+nach der ersten Symbiose (voll ausgebaut, 10 Stufen, nach dem weichen Deckel):
+
+| Sporenflüge | 10 | 50 | 100 | 200 | 500 | 1000 |
+|---|---|---|---|---|---|---|
+| wirksamer Faktor | ×2,2 | ×5,4 | ×8,4 | ×13,5 | ×25 | ×41 |
+
+Zum Vergleich im selben Zustand: *Allverbindung* ×5,4, *Der Kern* ×5,0, das Biom
+*Urwald* ×25. Der Skill liegt damit in derselben Größenordnung wie die anderen
+Endspiel-Skills.
+
+Zwei Bot-Läufe über 60 Stunden mit identischen Entscheidungen, einmal mit und
+einmal ohne den Reset: erster Sporenflug 9,1 h in beiden, erste Symbiose 36,7 h
+in beiden, *Der Kern* 49,2 h gegen 49,7 h, Reifegrad nach 60 h 139 gegen 138.
+Die Meilensteine verschieben sich also nicht.
+
+## Der doppelte automatische Sporenflug
+
+Zwei Dinge schalteten denselben Automaten frei: der Skillbaum-Knoten
+**Sporen-Automat** (72 WP, Ast Automatik, braucht ein Biom) und die Mutation
+**Sporen-Instinkt** (2500 Sporen). Der Unterschied war da, aber unsichtbar — die
+Mutation geht bei jeder Symbiose verloren, der Skill nicht.
+
+Beide Texte sagen das jetzt. Und wer den Skill hat, kann die Mutation nicht mehr
+aus Versehen nachkaufen: Ihre Karte trägt die Marke **PER SKILL** und ist
+gesperrt. 2500 Sporen gespart.
+
+
 ## v2.6.1 – Die Scrollleiste im Modal
 
 Modale Fenster waren die einzige scrollende Fläche im Spiel ohne eigene

@@ -467,6 +467,47 @@ Prüfen: fällt der Reifegrad in gleichmäßigen Schritten, oder gibt es einen S
 Meilensteine, Prüfungen, goldene Sporen, Offline-Kappe und beide Prestige-Schichten
 ohne stundenlanges Spielen.
 
+## Zähler, die niemals sinken
+
+Ein Reset darf nur das zurücksetzen, was er mechanisch zurücksetzen muss.
+Alles andere ist ein Lebenszeit-Zähler und gehört in diese Liste:
+
+| Feld | Setzt zurück | Warum |
+|---|---|---|
+| `S.lifetime` | nie | trägt den Reifegrad |
+| `S.level` | nie | Grundsatz „Nie Fortschritt wegnehmen" |
+| `S.nodes` | nie | der Skillbaum ist das Herzstück |
+| `S.ach` | nie | Erfolge |
+| `S.prestiges` | nie | Statistik, Bestenliste, Erfolge, Skill *Waldgedächtnis* |
+| `S.sporenGesamt` | nie | Erfolge *Sammle insgesamt X Sporen*, Statistik |
+| `S.spLife`, `S.symResets` | nie | Symbiose-Punkte und -Zahl |
+| `S.sporeLife` | bei der Symbiose | trägt `sporeMult()` und `spGain()` — **muss** zurück |
+| `S.sporen`, `S.muts` | bei der Symbiose | das ist der Preis der Symbiose |
+| `S.runTotal`, `S.runTime`, `S.biomass`, `S.structs` | bei jedem Reset | Werte des Durchlaufs |
+
+`S.prestiges` stand bis v2.7.0 auf der falschen Seite dieser Liste. Der Schaden
+war nicht die Anzeige, sondern der Skill **Waldgedächtnis**: Er gibt +2 %
+Produktion je Stufe und je absolviertem Sporenflug und ist mit `sym: 1`
+freigeschaltet — also erst nach der ersten Symbiose, genau dem Moment, in dem
+der Zähler auf null gesetzt wurde. 47 Wachstumspunkte für einen Skill, der
+in diesem Augenblick exakt ×1,00 gab.
+
+**Regel:** Wer einen Zähler in einen Reset schreibt, prüft vorher, wer ihn
+liest — `grep` über `js/` genügt. Steht er in einem Erfolg, in `myEntry()`, in
+der Statistik oder in einer Skill-Wirkung, gehört er nicht in den Reset.
+
+## Doppelte Wirkungen: `mutState().unnoetig`
+
+Der Skill *Sporen-Automat* und die Mutation *Sporen-Instinkt* schalten beide
+`m.autoPrestige` frei. Das ist kein Fehler — die Mutation kommt früher, der
+Skill überlebt die Symbiose. Aber wer den Skill hat, sollte die 2500 Sporen
+nicht noch einmal ausgeben.
+
+Dafür trägt eine Mutation optional `unnoetig: () => boolean`. `mutState()` wertet
+das aus, nimmt sie aus `canBuy` heraus und meldet es der Oberfläche, die die
+Karte mit der Marke *PER SKILL* sperrt. Für weitere Doppelungen genügt derselbe
+Eintrag in `D.MUTATIONS`.
+
 ## Info-Fenster
 
 Die Erklaerungen zu Reifegrad, Sporenflug und Symbiose stehen als `D.INFO` in

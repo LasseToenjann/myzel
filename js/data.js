@@ -310,7 +310,9 @@ const D = (() => {
       lv => `Goldene Sporen erscheinen ${U.fmtPct(0.12 * lv)} häufiger und wirken ${U.fmtPct(0.15 * lv)} stärker.`,
       (m, lv) => { m.buffChance *= 1 + 0.12 * lv; m.buffMult *= 1 + 0.15 * lv; }),
     N('a_pres', 'automatik', 10, 0, '🔁', 'Sporen-Automat', 1, 72, 1,
-      () => `Schaltet den automatischen Sporenflug frei (einstellbar im Sporen-Reiter).`,
+      () => `Schaltet den automatischen Sporenflug <b>dauerhaft</b> frei (einstellbar im
+        Sporen-Reiter). Die Mutation <i>Sporen-Instinkt</i> tut dasselbe, geht aber bei
+        jeder Symbiose verloren — dieser Skill nicht.`,
       (m) => { m.autoPrestige = true; }, { sym: 1 }),
     N('a_takt', 'automatik', 11, 0, '⚡', 'Schneller Takt', 10, 95, 1.50,
       lv => `Automatik arbeitet ${1 + 0.5 * lv}× schneller, Produktion ${U.fmtPct(0.05 * lv)}.`,
@@ -616,8 +618,10 @@ const D = (() => {
       lv => `${U.fmtPct(0.02 * lv)} Produktion pro gekaufter Skill-Stufe.`,
       (m, lv, c) => { m.global *= 1 + 0.02 * lv * c.nodeLevels; }),
     M('mu_auto', '🔁', 'Sporen-Instinkt', 1, 2500, 1,
-      () => `Schaltet den automatischen Sporenflug frei.`,
-      (m) => { m.autoPrestige = true; }),
+      () => `Schaltet den automatischen Sporenflug frei. Geht bei einer Symbiose verloren —
+        dauerhaft macht ihn der Skill <i>Sporen-Automat</i> im Ast Automatik.`,
+      (m) => { m.autoPrestige = true; },
+      { unnoetig: () => !!(typeof S !== 'undefined' && S && S.nodes && S.nodes['a_pres']) }),
     M('mu_ewig', '♾', 'Ewige Sporen', 5, 400, 5.0,
       lv => `Sporen-Exponent +${(0.002 * lv).toFixed(3)}.`,
       (m, lv) => { m.sporeExp += 0.002 * lv; })
@@ -701,7 +705,10 @@ const D = (() => {
       `Absolviere ${v === 1 ? 'einen Sporenflug' : v + ' Sporenflüge'}.`, s => s.prestiges >= v);
   });
   [1, 100, 1e4, 1e6, 1e9].forEach((v, i) => {
-    A('spo' + i, 'Sporenernte ' + (i + 1), `Sammle insgesamt ${v === 1 ? 'eine Spore' : U.fmt(v) + ' Sporen'}.`, s => s.sporeLife >= v);
+    /* Gesamtzaehler, nicht der aktuelle Bestand: Der faellt bei jeder Symbiose
+       auf null, und "insgesamt" waere dann eine Luege. */
+    A('spo' + i, 'Sporenernte ' + (i + 1), `Sammle insgesamt ${v === 1 ? 'eine Spore' : U.fmt(v) + ' Sporen'}.`,
+      s => (s.sporenGesamt || s.sporeLife) >= v);
   });
   [10, 40, 100, 200, 350].forEach((v, i) => {
     A('node' + i, 'Netzweber ' + (i + 1), `Kaufe ${v} Skill-Stufen im Netz.`, s => E.nodeLevelSum() >= v);

@@ -57,6 +57,13 @@ gesammelten Sporen bleibt beim Kaufen erhalten.
 **Symbiose** — Die letzte Schicht, freigeschaltet über den Skillknoten
 „Symbiose-Zugang". Sporen und Mutationen gehen dabei verloren, dafür erschließt du
 **Biome**: dauerhafte Boni, die zusätzlich die äußeren Ringe im Skillbaum öffnen.
+Deine **Sporenflüge** und die **insgesamt gesammelten Sporen** zählen weiter —
+sie stehen in der Statistik und in der Bestenliste und sinken nie.
+
+Ein Hinweis zum automatischen Sporenflug: Die Mutation 🔁 *Sporen-Instinkt*
+(2500 Sporen) schaltet ihn frei, geht aber bei jeder Symbiose verloren. Der Skill
+🔁 *Sporen-Automat* im Ast Automatik tut dasselbe **dauerhaft**. Wer den Skill
+hat, braucht die Mutation nicht mehr — sie ist dann gesperrt statt teuer.
 
 **Erfolge** — 59 Stück in fünf farbigen Gruppen, jeder gibt dauerhaft **+2 %** Produktion.
 

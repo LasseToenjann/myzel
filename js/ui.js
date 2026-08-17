@@ -780,11 +780,14 @@ const UI = (() => {
       const st = E.mutState(m.mu.id);
       m.c.classList.toggle('can', st.canBuy);
       m.c.classList.toggle('maxed', st.maxed);
+      m.c.classList.toggle('unnoetig', !!st.unnoetig);
       setText(m.lv, st.lv + ' / ' + m.mu.max);
       setHTML(m.d, m.mu.d(st.maxed ? st.lv : st.lv + 1));
-      setText(m.cost, st.maxed ? '' : U.fmtInt(st.cost));
+      setText(m.cost, st.maxed || st.unnoetig ? '' : U.fmtInt(st.cost));
       m.btn.disabled = !st.canBuy;
-      setText(m.btxt, st.maxed ? 'Voll ausgebaut' : st.lv > 0 ? 'Weiter' : 'Mutieren');
+      setText(m.btxt, st.maxed ? 'Voll ausgebaut'
+        : st.unnoetig ? 'Schon dauerhaft freigeschaltet'
+        : st.lv > 0 ? 'Weiter' : 'Mutieren');
     });
   }
 
@@ -950,7 +953,8 @@ const UI = (() => {
       ['Skillbaum und Sporen', [
         ['Wachstumspunkte', `${U.fmtInt(E.wpAvail())} frei / ${U.fmtInt(E.wpTotal())}`],
         ['Skill-Stufen', U.fmtInt(E.nodeLevelSum())],
-        ['Sporen gesammelt', U.fmtInt(S.sporeLife)],
+        ['Sporen gesammelt', U.fmtInt(S.sporenGesamt || S.sporeLife)],
+        ['davon aktuell wirksam', U.fmtInt(S.sporeLife)],
         ['Sporenflüge', U.fmtInt(S.prestiges)],
         ['Symbiose-Punkte', U.fmtInt(S.spLife)],
         ['Biome', `${S.biomes.length} / ${D.BIOMES.length}`]
@@ -985,7 +989,11 @@ const UI = (() => {
     if (Date.now() - lbGeladen > 60000) { lbGeladen = Date.now(); ladeBestenliste(); }
     setHTML(U.$('#lb-status'), lbHinweis());
     const gruppen = statGruppen();
-    if (!R.statCells) {
+    /* Die Karten entstehen einmal, danach werden nur die Werte der Reihe nach
+       hineingeschrieben. Aendert sich die Zahl der Zeilen, passen Beschriftung
+       und Wert nicht mehr zusammen - dann lieber neu bauen. */
+    const anzahl = gruppen.reduce((n, g) => n + g[1].length, 0);
+    if (!R.statCells || R.statCells.length !== anzahl) {
       R.statGrid.innerHTML = gruppen.map(([titel, zeilen]) => `
         <div class="stat-gruppe"><div class="sg-titel">${titel}</div>
           <div class="stat-grid">${zeilen.map(z =>

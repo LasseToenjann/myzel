@@ -412,6 +412,12 @@ textarea.save-area{width:100%;max-width:820px;height:110px;background:rgba(0,0,0
 .lb-row.me{background:rgba(79,224,160,.14);border:1px solid rgba(79,224,160,.3)}
 .lb-row.top1 .r{color:var(--gold)}
 
+/* Eine Mutation, die ein Skill dauerhaft erledigt: sichtbar, aber nicht
+   kaufbar - sonst gibt man 2500 Sporen fuer etwas aus, das man schon hat. */
+.card.mut.unnoetig{opacity:.5;border-color:rgba(79,224,160,.3)}
+.card.mut.unnoetig::after{content:"PER SKILL";position:absolute;top:11px;right:13px;
+  font-size:10px;letter-spacing:1.5px;color:var(--acc);font-weight:700}
+
 /* ============ Info-Knoepfe und Info-Fenster ============ */
 /* Klein genug, um nicht zu stoeren, mit einer unsichtbaren 44-px-Flaeche
    darum herum - sonst trifft man den Knopf auf dem iPad nicht. */

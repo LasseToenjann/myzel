@@ -82,6 +82,13 @@ Richtwerte für einen pausenlos und optimal spielenden Bot:
 - **Zahlen im deutschen Fliesstext.** `U.fmt` und `toFixed()` liefern beide einen
   Punkt. Neben handgeschriebenen Kommazahlen liest sich das falsch: „hoch 0,35
   (bei dir 0.371)". In `D.INFO` gibt es `komma()` dafuer.
+- **Einen Zaehler in einen Reset schreiben, ohne zu pruefen, wer ihn liest.**
+  `doSym()` setzte `S.prestiges = 0`. Daran hingen die Statistik, die
+  Bestenliste, drei Erfolge — und der Skill *Waldgedaechtnis*, der +2 % je
+  Sporenflug gibt und sich mit `sym: 1` genau dann freischaltet, wenn der
+  Zaehler auf null gesetzt wurde. Der Skill war beim Kauf exakt wertlos. Die
+  Liste der Lebenszeit-Zaehler steht in
+  [docs/TECHNIK.md](docs/TECHNIK.md#zaehler-die-niemals-sinken).
 - **Zeit in der Bildschleife.** Der Schritt ist auf 0,25 s gedeckelt. Wer sich
   darauf verlässt, verliert jede Pause, in der die Seite schlief — auf dem iPad
   ist das der Normalfall. Immer gegen `Date.now()` prüfen, nicht gegen den
@@ -108,7 +115,12 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.6.1 — die Scrollleiste in Modalen sieht aus wie die in den Reitern.
+Version 2.7.0 — die Symbiose setzt `S.prestiges` nicht mehr zurueck, und
+`S.sporenGesamt` zaehlt die Sporen ueber alle Symbiosen. Der Skill
+*Waldgedaechtnis* wirkt dadurch ueberhaupt erst. Der automatische Sporenflug
+laesst sich nicht mehr doppelt bezahlen (`mutState().unnoetig`).
+
+Davor: Version 2.6.1 — die Scrollleiste in Modalen sieht aus wie die in den Reitern.
 Wer eine neue scrollende Flaeche baut, traegt sie in den Abschnitt
 „Scrollleisten" in `style.css` ein; ohne das zeichnet Windows seine graue
 Standardleiste mit Pfeilen hinein.

@@ -263,6 +263,42 @@ Lautstärke wird quadriert, weil das dem Höreindruck besser entspricht.
 Gestartet wird erst beim Eintritt ins Spiel — vorher verbieten Browser das Abspielen
 ohne Zutun der Nutzenden.
 
+## Reifegrad und die Aufbauphase
+
+Ein Reifegrad verlangt die **2,5-fache Biomasse des gesamten bisherigen Spiels**
+(`LVL_STEP = 0.40` Zehnerpotenzen je Stufe). Gemessen über 24 Stufen ist die
+Form im ununterbrochenen Spiel gutmütig: Der Balken erreicht 1 % nach 0,7 % der
+Stufendauer und 50 % nach 44 % — vorn schneller als hinten, weil er logarithmisch
+aufträgt. Die Stufen dauern mittleres Spiel hinweg allerdings 8 bis 16 Stunden;
+1 % davon sind trotzdem Minuten.
+
+**Nach einem Sporenflug bricht die Form.** `softReset()` setzt die Produktion auf
+null, `S.lifetime` bleibt aber stehen. Bis die Produktion wieder in der
+Größenordnung der insgesamt erzeugten Biomasse liefert, kann sich der Balken
+nicht rühren — gemessen bei Reifegrad 20: 0,10 % nach fünf Minuten, 1,05 % nach
+einer halben Stunde, dann 50 % → 86 % in der letzten Stunde.
+
+Deshalb merkt sich `softReset()` die Produktion beim Reset in `S.rateVorReset`,
+und `E.aufbau()` liefert daraus den Stand des Wiederaufbaus:
+
+```js
+{ aktiv, anteil, balken, rate, ziel }
+```
+
+`anteil` ist das ehrliche Verhältnis, `balken` dessen Wurzel. Die Wurzel ist
+reine Darstellung: Roh aufgetragen stünde der Balken zehn Minuten lang bei fast
+null — also genau das Problem, das er lösen soll. Damit dabei nichts beschönigt
+wird, steht daneben nie eine Prozentzahl, sondern immer die echten Werte
+(`10,6 K von 99,2 K /s`).
+
+Bezugswert ist bewusst **nicht** `stats.bestRate`: Dort steht auch ein Wert, der
+nur während einer goldenen Spore erreicht wurde — danach sähe jedes Ablaufen
+eines Buffs wie ein Wiederaufbau aus.
+
+Im Aufbau übernimmt `nextGoal()` diese Phase als aktuelles Ziel, und die
+Restzeit-Schätzung wird ausgeblendet; sie ergab eine Minute nach dem Flug
+763 Tage.
+
 ## Offline-Wachstum und schlafende Seiten
 
 Zwei verschiedene Fälle, eine Stelle: `Game.rueckkehr(sekunden)`.

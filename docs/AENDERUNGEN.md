@@ -1,5 +1,48 @@
 # Änderungsverlauf
 
+## v2.4.1 – Der Reifegrad hängt nicht fest, er wartet auf die Produktion
+
+Nach einem Sporenflug schien der Reifegrad-Balken minutenlang stillzustehen und
+machte dann die zweite Hälfte in der letzten Stunde. Gemessen bei Reifegrad 20:
+
+| Zeit nach dem Sporenflug | Reifegrad-Balken | Produktion |
+|---|---|---|
+| 5 Minuten | 0,10 % | 625 /s |
+| 30 Minuten | 1,05 % | 10,6 K/s |
+| 1 Stunde | 6,9 % | 45,6 K/s |
+| 2 Stunden | 27 % | 76,4 K/s |
+| 3 Stunden | 50 % | 90,7 K/s |
+| 4 Stunden | 86 % | 313 K/s |
+
+Eine halbe Stunde spielen für ein Prozent. Der Balken lügt dabei nicht: Ein
+Reifegrad verlangt die 2,5-fache Biomasse des **gesamten bisherigen Spiels**,
+und der Sporenflug setzt zwar die Produktion auf null, nicht aber die insgesamt
+erzeugte Biomasse. Solange die Produktion wieder hochläuft, trägt sie zu einer
+Zahl, die schon bei einer Milliarde steht, praktisch nichts bei.
+
+Es passiert in dieser Zeit aber sehr wohl etwas — nur eben etwas anderes. Genau
+das zeigt der Balken jetzt:
+
+- Solange die Produktion unter dem Stand **vor dem Flug** liegt, füllt sich ein
+  zweiter, goldener Balken hinter dem Reifegrad-Balken: der Wiederaufbau.
+- Darunter stehen die echten Werte — `10,6 K von 99,2 K /s`. Keine erfundene
+  Prozentzahl: Der Balken ist für die Lesbarkeit gestreckt (Wurzel, weil die
+  Produktion exponentiell zurückklettert), die Zahlen daneben sind exakt.
+- Auch das Feld **Nächstes Ziel** nennt in dieser Phase den Wiederaufbau statt
+  eines Reifegrads, der noch stundenlang nicht kommt.
+- Die Restzeit-Schätzung verschwindet währenddessen. Sie war dort unbrauchbar —
+  eine Minute nach dem Flug stand dort „noch ~763 Tage".
+
+Ab dem Moment, in dem der alte Stand wieder erreicht ist, verschwindet der
+goldene Balken und der Reifegrad übernimmt. Dieselbe Anzeige greift nach einer
+Symbiose.
+
+**An den Zahlen des Spiels ändert sich nichts.** Der Reifegrad braucht genauso
+lang wie vorher — man sieht jetzt nur, woran man in der Zwischenzeit arbeitet.
+Kürzer wird die Aufbauphase über die Skills 🎒 *Nährstoffdepot* und 🪨 *Totholz*
+(Startkapital nach dem Flug) sowie 🧠 *Erinnerung* (behält Strukturen).
+
+
 ## v2.4 – Drei Fehler, die auf dem iPad zusammenkamen
 
 **Der Skillbaum war nach jedem Neuladen leer**

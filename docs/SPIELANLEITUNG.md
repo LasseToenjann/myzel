@@ -91,6 +91,21 @@ zurück ins Startmenü, um den Spielstand zu wechseln.
   wiederholt. Standardmäßig aus — einschalten über das ♫ oben rechts.
 - Die **Optionen** liegen hinter den drei Strichen oben rechts.
 
+## Nach einem Sporenflug
+
+Deine Produktion faengt wieder bei null an, die insgesamt erzeugte Biomasse
+bleibt aber stehen. Der Reifegrad kann sich deshalb erst ruehren, wenn die
+Produktion wieder in der alten Groessenordnung liegt — das dauert je nach
+Ausbau eine knappe Stunde.
+
+Solange zeigt der Balken oben den **Wiederaufbau** in Gold, mit den echten
+Werten darunter (`10,6 K von 99,2 K /s`). Ist der alte Stand erreicht,
+uebernimmt wieder der Reifegrad.
+
+Kuerzer wird diese Phase mit 🎒 *Naehrstoffdepot* und 🪨 *Totholz* (du startest
+mit Biomasse statt bei null) sowie 🧠 *Erinnerung* (du behaeltst einen Teil
+deiner Strukturen).
+
 ## Tasten
 
 | Taste | Wirkung |

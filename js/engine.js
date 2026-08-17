@@ -291,6 +291,7 @@ const E = (() => {
   function canPrestige() { return sporeGain() >= 1; }
 
   function softReset(keepStructures) {
+    S.rateVorReset = total;          // Bezugswert für die Aufbauphase
     const keep = keepStructures ? m.keepPct : 0;
     for (let i = 0; i < 8; i++) {
       const k = Math.floor(S.structs[i] * keep);
@@ -470,6 +471,23 @@ const E = (() => {
     recalc();
   }
 
+  /* ---------- Aufbau nach einem Reset ----------
+     Nach einem Sporenflug faellt die Produktion auf null, die gesamte je
+     erzeugte Biomasse bleibt aber stehen. Der Reifegrad kann sich deshalb
+     erst ruehren, wenn die Produktion wieder in der alten Groessenordnung
+     liegt - vorher sieht es aus, als haenge er fest. Diese Phase bekommt
+     eine eigene Anzeige. */
+  function aufbau() {
+    const ziel = S.rateVorReset || 0;
+    if (ziel <= 0 || total >= ziel) return { aktiv: false, anteil: 1, balken: 1, rate: total, ziel };
+    const anteil = U.clamp(total / ziel, 0, 1);
+    /* Die Produktion klettert exponentiell zurueck - roh aufgetragen bliebe
+       der Balken zehn Minuten lang bei fast null stehen, also genau das
+       Problem, das er loesen soll. Die Wurzel streckt den Anfang. Angezeigt
+       werden daneben immer die echten Werte, damit nichts beschoenigt wird. */
+    return { aktiv: true, anteil, balken: Math.sqrt(anteil), rate: total, ziel };
+  }
+
   /* ---------- Nächstes Ziel ---------- */
   function nextGoal() {
     // 1) nächste Struktur
@@ -493,7 +511,13 @@ const E = (() => {
     if (spGain() < 1) {
       return { txt: `Symbiose bei ${U.fmt(1e6)} Sporen gesamt`, p: U.clamp(Math.log10(Math.max(1, S.sporeLife)) / 6, 0, 1) };
     }
-    // 4) nächster Reifegrad
+    // 4) Aufbau nach einem Sporenflug - erst danach zaehlt der Reifegrad wieder
+    const auf = aufbau();
+    if (auf.aktiv) {
+      return { txt: `Produktion wieder aufbauen — ${U.fmt(auf.rate)} von ${U.fmt(auf.ziel)} /s`,
+        p: auf.balken };
+    }
+    // 5) nächster Reifegrad
     return { txt: `Reifegrad ${S.level + 1}`, p: levelProgress() };
   }
 
@@ -512,7 +536,7 @@ const E = (() => {
     nodeState, gateReason, buyNode, respec, mutState, buyMut,
     sporeGain, sporeProgress, canPrestige, doPrestige,
     symUnlocked, spGain, canSym, doSym, buyBiome,
-    checkAch, catchGold, offlineGain, applyOffline, nextGoal, timeToAfford, sporeMult,
+    checkAch, catchGold, offlineGain, applyOffline, nextGoal, timeToAfford, sporeMult, aufbau,
     get softcap() { return { at: SOFTCAP, pow: SOFTCAP_POW }; },
     nodeLevelSum, mutLevelSum, structsTotal
   };

@@ -66,6 +66,10 @@ Richtwerte für einen pausenlos und optimal spielenden Bot:
 - **`+` und `%` in der Bestenliste.** textdb.online dekodiert den Wert zweimal und
   macht dabei aus `+` ein Leerzeichen. `1e+27` wird zu `1e 27`, das JSON ist
   kaputt, und ein einziger solcher Eintrag legt die Liste für alle lahm.
+- **Reifegrad nach einem Reset.** `levelProgress()` haengt an `S.lifetime`, und
+  die bleibt beim Sporenflug stehen, waehrend die Produktion auf null faellt.
+  Der Balken steht dann real still — gemessen 1 % nach einer halben Stunde. Wer
+  daran etwas aendert, aendert Balance; die Anzeige loest es ueber `E.aufbau()`.
 - **Zeit in der Bildschleife.** Der Schritt ist auf 0,25 s gedeckelt. Wer sich
   darauf verlässt, verliert jede Pause, in der die Seite schlief — auf dem iPad
   ist das der Normalfall. Immer gegen `Date.now()` prüfen, nicht gegen den
@@ -92,7 +96,12 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.4 — drei Fehler behoben, die auf dem iPad zusammenkamen: der Skillbaum
+Version 2.4.1 — die Aufbauphase nach einem Sporenflug ist sichtbar: Solange die
+Produktion unter dem Stand vor dem Flug liegt, zeigt ein zweiter Balken den
+Wiederaufbau statt eines Reifegrads, der sich real nicht ruehrt. Reine Anzeige,
+keine Zahl angefasst.
+
+Davor: Version 2.4 — drei Fehler behoben, die auf dem iPad zusammenkamen: der Skillbaum
 war nach jedem Neuladen leer (`merge()` übersprang die freien Tabellen), das
 Offline-Wachstum griff nie (Safari legt die Seite schlafen, statt sie zu entladen),
 und die Bestenliste war unlesbar (`1e+27` wurde beim Schreiben zu `1e 27`). Dazu

@@ -42,6 +42,7 @@ const Save = (() => {
       playTime: 0,
       idleTime: 0,
       goldTimer: 130,
+      rateVorReset: 0,      // Produktion vor dem letzten Sporenflug (Aufbau-Anzeige)
       lastSave: Date.now(),
       lastSeen: Date.now(),
       seenTabs: [],

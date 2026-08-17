@@ -1153,8 +1153,15 @@ const UI = (() => {
     U.$('#t-level').textContent = S.level;
     const p = E.levelProgress();
     U.$('#t-xpfill').style.width = (p * 100).toFixed(1) + '%';
-    U.$('#t-xptxt').textContent = (p * 100).toFixed(1) + ' %';
-    setText(U.$('#t-xpeta'), reifeRestzeit());
+    const auf = E.aufbau();
+    U.$('#t-xpauf').style.width = auf.aktiv ? (auf.balken * 100).toFixed(1) + '%' : '0%';
+    U.$('#topbar').classList.toggle('im-aufbau', auf.aktiv);
+    // Im Aufbau keine Prozentzahl: der Balken ist gestreckt, die Zahlen
+    // darunter sind die echten. Eine Prozentangabe wuerde beides vermischen.
+    U.$('#t-xptxt').textContent = auf.aktiv ? 'Aufbau' : (p * 100).toFixed(1) + ' %';
+    setText(U.$('#t-xpeta'), auf.aktiv
+      ? U.fmt(auf.rate) + ' von ' + U.fmt(auf.ziel) + ' /s'
+      : reifeRestzeit());
     U.$('#t-wp').textContent = U.fmtInt(E.wpAvail());
     const sw = U.$('#t-spore-wrap');
     sw.classList.toggle('hidden', S.sporeLife === 0 && S.sporen === 0);
@@ -1171,6 +1178,9 @@ const UI = (() => {
       Produktion. Jeder Reifegrad braucht die 2,5-fache Biomasse - ohne
       diese Angabe wirkt der Balken mitten im Spiel wie eingefroren,
       obwohl er sich voellig normal verhaelt. */
+  /* Waehrend der Aufbauphase ist diese Schaetzung wertlos - gemessen ergab
+     sie eine Minute nach dem Sporenflug 763 Tage. Dort steht stattdessen der
+     Aufbau-Stand. */
   function reifeRestzeit() {
     const noetig = E.lifetimeForLevel(S.level + 1) / Math.max(1e-12, E.m.xp);
     const fehlt = noetig - S.lifetime;

@@ -88,7 +88,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:n
 .xpbar{height:7px;background:rgba(0,0,0,.45);border-radius:4px;margin-top:6px;overflow:hidden;position:relative;
   border:1px solid rgba(255,255,255,.05)}
 .xpbar-fill{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--acc-d),var(--lime));
-  transition:width .3s ease;box-shadow:0 0 12px rgba(166,232,92,.5)}
+  transition:width .3s ease;box-shadow:0 0 12px rgba(166,232,92,.5);position:relative;z-index:1}
 .xpbar-txt{position:absolute;right:5px;top:-15px;font-size:10px;color:var(--dim2)}
 .top-right{margin-left:auto;display:flex;gap:8px}
 .icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
@@ -393,6 +393,13 @@ textarea.save-area{width:100%;max-width:820px;height:110px;background:rgba(0,0,0
   animation:zielBereit 1.9s ease-in-out infinite}
 @keyframes zielBereit{0%,100%{opacity:.55}50%{opacity:1}}
 .goalbar.bereit .gt{color:var(--lime)}
+/* Zweiter, gedaempfter Balken: der Wiederaufbau nach einem Sporenflug.
+   Er liegt hinter dem Reifegrad-Balken, damit beide zugleich lesbar sind. */
+.xpbar-auf{position:absolute;left:0;top:0;height:100%;border-radius:inherit;
+  background:linear-gradient(90deg,rgba(247,201,72,.30),rgba(247,201,72,.55));
+  transition:width .35s ease}
+#topbar.im-aufbau .xpbar-txt{color:var(--gold)}
+#topbar.im-aufbau .xpbar-eta{color:var(--gold);opacity:.85}
 .xpbar-eta{font-size:10.5px;color:var(--dim2);letter-spacing:.02em;margin-top:3px;display:block}
 .lb-luecke{text-align:center;color:var(--dim2);letter-spacing:4px;font-size:12px;padding:2px 0}
 .lb-list{display:flex;flex-direction:column;gap:5px;margin:14px 0}

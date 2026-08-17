@@ -1,0 +1,291 @@
+/* ============================================================
+   MYZEL - main.js
+   Startbildschirm, Spielschleife, Modale, Tasten
+   ============================================================ */
+const Game = (() => {
+
+  let last = 0, uiAcc = 0, saveAcc = 0, running = false;
+
+  /* ================= Modale ================= */
+  function modal(html, onOpen) {
+    const root = U.$('#modal-root');
+    root.innerHTML = `<div class="modal">${html}</div>`;
+    root.classList.add('on');
+    root.onclick = e => { if (e.target === root) close(); };
+    if (onOpen) onOpen(U.$('.modal', root));
+    return root;
+  }
+  function close() { U.$('#modal-root').classList.remove('on'); U.$('#modal-root').innerHTML = ''; }
+
+  function confirmBox(title, text, cb, okLabel, danger) {
+    modal(`<h3>${title}</h3><p>${text}</p>
+      <div class="mrow"><button class="btn ghost" id="m-no">Abbrechen</button>
+      <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="m-yes">${okLabel || 'Ja, weiter'}</button></div>`,
+      m => {
+        U.$('#m-no', m).onclick = close;
+        U.$('#m-yes', m).onclick = () => { close(); cb(); };
+      });
+  }
+
+  /* ================= Startbildschirm ================= */
+  function initStart() {
+    const info = U.$('#start-save-info');
+    const data = Save.peek();
+    if (data) {
+      U.$('#btn-continue').classList.remove('hidden');
+      const lv = data.level || 0;
+      const ago = U.fmtTimeShort((Date.now() - (data.lastSave || Date.now())) / 1000);
+      info.innerHTML = `Gespeichertes Myzel · Reifegrad <b style="color:var(--lime)">${lv}</b> ·
+        ${U.fmt(data.lifetime || 0)} Biomasse gesamt · zuletzt vor ${ago}`;
+    } else {
+      info.textContent = 'Noch kein Spielstand auf diesem Gerät.';
+    }
+
+    U.$('#btn-continue').onclick = () => { if (Save.load()) enter(false); };
+    U.$('#btn-new').onclick = () => {
+      if (Save.has()) {
+        confirmBox('Neues Myzel beginnen?', 'Der vorhandene Spielstand wird überschrieben. Du kannst ihn vorher in den Optionen exportieren.',
+          () => { Save.newGame(); enter(true); }, 'Neu beginnen', true);
+      } else { Save.newGame(); enter(true); }
+    };
+    U.$('#btn-import-start').onclick = () => {
+      modal(`<h3>Spielstand laden</h3><p>Füge den exportierten Text ein.</p>
+        <textarea class="save-area" id="imp-a" style="max-width:none"></textarea>
+        <div class="mrow"><button class="btn ghost" id="i-no">Abbrechen</button>
+        <button class="btn btn-primary" id="i-yes">Laden</button></div>`, m => {
+        U.$('#i-no', m).onclick = close;
+        U.$('#i-yes', m).onclick = () => {
+          const v = U.$('#imp-a', m).value.trim();
+          if (v && Save.importStr(v)) { close(); enter(false); }
+          else FX.toast('Fehlerhafter Spielstand', 'Der Text konnte nicht gelesen werden.', '');
+        };
+      });
+    };
+    U.$('#btn-board-start').onclick = () => showLeaderboard(true);
+    U.$('#btn-about').onclick = showAbout;
+  }
+
+  function showAbout() {
+    modal(`<h3>Worum geht es?</h3>
+      <p>Du bist ein <b>Myzel</b> — das Pilzgeflecht unter dem Waldboden. Du zersetzt, wächst und
+      verbindest dich mit allem, was im Boden liegt.</p>
+      <p><b>So spielt es sich:</b></p>
+      <p>1. <b>Nähren</b> und Strukturen kaufen. Strukturen erzeugen Biomasse von allein.<br>
+      2. Genug Biomasse bringt <b>Reifegrad</b>. Jeder Reifegrad gibt <b>Wachstumspunkte</b>.<br>
+      3. Punkte steckst du in den <b>Skillbaum</b>. Der bleibt für immer — auch nach jedem Reset.<br>
+      4. Später löst du dich beim <b>Sporenflug</b> auf und wächst mit dauerhaftem Bonus neu.<br>
+      5. Noch später gehst du eine <b>Symbiose</b> mit ganzen Biomen ein.</p>
+      <p>Das Spiel läuft auch weiter, wenn du es schließt. Es ist zum nebenbei Spielen gedacht:
+      Es gibt keinen Verlust, keine Zeitfenster, keinen Druck.</p>
+      <p style="font-size:12.5px;opacity:.7">Gespeichert wird automatisch im Browser dieses Geräts.</p>
+      <div class="mrow"><button class="btn btn-primary" id="ab-ok">Verstanden</button></div>`,
+      m => U.$('#ab-ok', m).onclick = close);
+  }
+
+  /* ================= Eintritt ins Spiel ================= */
+  function enter(isNew) {
+    const ss = U.$('#start-screen');
+    ss.classList.add('leaving');
+    setTimeout(() => ss.classList.add('hidden'), 560);
+    U.$('#game').classList.remove('hidden');
+    document.body.classList.add('in-game');
+    afterLoad(isNew);
+    if (isNew) setTimeout(showAbout, 900);
+  }
+
+  /** Nach jedem Laden/Import: alles neu aufbauen. */
+  function afterLoad(isNew) {
+    E.recalc();
+    UI.initTabs();
+    UI.show('netz');
+    UI.refreshAll();
+    FX.seed();
+    if (!isNew) checkOffline();
+    if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+  }
+
+  function checkOffline() {
+    if (!S.opt.offline) return;
+    const dt = (Date.now() - (S.lastSave || Date.now())) / 1000;
+    if (dt < 60) return;
+    const res = E.offlineGain(dt);
+    if (res.gain <= 0) {
+      FX.toast('Willkommen zurück', `Du warst ${U.fmtTimeShort(dt)} weg.`, '');
+      return;
+    }
+    E.applyOffline(res);
+    modal(`<h3>🌙 Es ist weitergewachsen</h3>
+      <p>Du warst <b>${U.fmtTime(res.raw)}</b> weg.
+      ${res.capped ? `Angerechnet wurden <b>${U.fmtTime(res.seconds)}</b> (deine Offline-Kappe).` : 'Die volle Zeit wurde angerechnet.'}</p>
+      <div class="offline-gain">+ ${U.fmt(res.gain)}</div>
+      <p style="text-align:center;font-size:12.5px">bei ${U.fmt(res.rate)} /s und ${(E.m.offlineEff * 100).toFixed(0)} % Offline-Effizienz.<br>
+      Beides lässt sich im Ast <b>Zersetzung</b> deutlich steigern.</p>
+      <div class="mrow"><button class="btn btn-primary" id="of-ok">Weitermachen</button></div>`,
+      m => U.$('#of-ok', m).onclick = close);
+  }
+
+  /* ================= Aktionen ================= */
+  function prestige() {
+    const g = E.sporeGain();
+    if (g < 1) return;
+    const go = () => {
+      const got = E.doPrestige();
+      FX.flash(); FX.sfx.prestige(); FX.resetNet();
+      for (let i = 0; i < 60; i++) setTimeout(() => FX.burst(FX.W / 2, FX.H / 2, '#f7c948', 6, 9), i * 12);
+      FX.toast('Sporenflug', `+${U.fmtInt(got)} Sporen. Das Netz beginnt von vorn.`, 'gold', 6000);
+      UI.show('netz'); UI.refreshAll(); Save.write();
+    };
+    if (S.opt.confirmPrestige) {
+      confirmBox('Sporenflug?', `Du erhältst <b>${U.fmtInt(g)} Sporen</b>. Biomasse und Strukturen gehen verloren,
+        Skillbaum, Reifegrad, Erfolge und Mutationen bleiben.`, go, 'Auflösen');
+    } else go();
+  }
+
+  function symbiose() {
+    const g = E.spGain();
+    if (g < 1) return;
+    const go = () => {
+      const got = E.doSym();
+      FX.flash(true); FX.sfx.prestige(); FX.resetNet();
+      for (let i = 0; i < 70; i++) setTimeout(() => FX.burst(FX.W / 2, FX.H / 2, '#b98bf0', 7, 10), i * 12);
+      FX.toast('Symbiose', `+${U.fmtInt(got)} Symbiose-Punkte.`, 'violet', 6000);
+      UI.show('symbiose'); UI.refreshAll(); Save.write();
+    };
+    if (S.opt.confirmPrestige) {
+      confirmBox('Symbiose eingehen?', `Du erhältst <b>${U.fmtInt(g)} Symbiose-Punkte</b>.
+        <b>Sporen und Mutationen gehen dabei verloren.</b> Skillbaum, Reifegrad, Erfolge und Biome bleiben.`, go, 'Verbinden');
+    } else go();
+  }
+
+  function enterChall(id) {
+    const ch = D.CHAL_BY_ID[id];
+    confirmBox(`${ch.ic} ${ch.name} antreten?`,
+      `Dein aktueller Durchlauf wird zurückgesetzt (ohne Sporen-Gewinn).<br><br>
+       <b>Handicap:</b> ${ch.rule}<br><b>Ziel:</b> ${U.fmt(E.challGoal(id))} Biomasse im Durchlauf.<br>
+       Du kannst jederzeit abbrechen.`,
+      () => { E.enterChall(id); FX.sfx.unlock(); UI.show('netz'); UI.refreshAll(); }, 'Antreten');
+  }
+
+  /* ================= Bestenliste ================= */
+  async function showLeaderboard(fromStart) {
+    modal(`<h3>Bestenliste</h3><p>Wird geladen …</p>`);
+    const list = await LB.fetchList();
+    const meName = (S && S.name) || '';
+    const rows = list.slice(0, 25).map((e, i) => `
+      <div class="lb-row ${i === 0 ? 'top1' : ''} ${e.n === meName && meName ? 'me' : ''}">
+        <span class="r">${i + 1}</span><span class="n">${escapeHtml(e.n)}</span>
+        <span class="lv">${U.fmt(e.bio)} Biomasse</span><span class="s">Reifegrad ${e.lv}</span></div>`).join('');
+    modal(`<h3>Bestenliste</h3>
+      <p>${LB.isRemote() ? 'Weltweite Rangliste.' : 'Diese Liste liegt nur auf diesem Gerät. Sie lässt sich in <code>js/leaderboard.js</code> auf einen gemeinsamen Server umstellen.'}</p>
+      <div class="lb-list">${rows || '<p style="opacity:.6">Noch keine Einträge.</p>'}</div>
+      ${fromStart || !S ? '' : `<input type="text" id="lb-name" maxlength="22" placeholder="Name deines Myzels" value="${escapeHtml(meName)}">`}
+      <div class="mrow">
+        <button class="btn ghost" id="lb-close">Schließen</button>
+        ${fromStart || !S ? '' : '<button class="btn btn-primary" id="lb-send">Ergebnis senden</button>'}
+      </div>`, m => {
+      U.$('#lb-close', m).onclick = close;
+      const b = U.$('#lb-send', m);
+      if (b) b.onclick = async () => {
+        const n = U.$('#lb-name', m).value.trim();
+        if (!n) return FX.toast('Name fehlt', 'Trag einen Namen ein.', '');
+        S.name = n.slice(0, 22);
+        b.disabled = true; b.textContent = 'Sende …';
+        const r = await LB.submit();
+        close();
+        FX.toast(r.ok ? 'Eingetragen' : 'Nur lokal gespeichert',
+          `Reifegrad ${S.level} · ${U.fmt(S.lifetime)} Biomasse`, r.ok ? 'lime' : '');
+      };
+    });
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  /* ================= Ereignisse aus der Engine ================= */
+  function drainEvents() {
+    while (E.events.length) {
+      const ev = E.events.shift();
+      if (ev.t === 'level') {
+        FX.sfx.unlock();
+        FX.toast('Reifegrad ' + ev.v, `+${ev.wp} Wachstumspunkt${ev.wp === 1 ? '' : 'e'} für den Skillbaum.`, 'lime');
+        UI.pulse('.level-res'); UI.pulse('.res-wp');
+        FX.burst(FX.W * 0.22, 60, '#a6e85c', 18, 4);
+      } else if (ev.t === 'ach') {
+        FX.sfx.ach();
+        FX.toast('✦ ' + ev.a.name, ev.a.d, '');
+      } else if (ev.t === 'struct') {
+        FX.sfx.unlock();
+        FX.toast('Neue Struktur', `${D.STRUCTS[ev.i].ic} ${D.STRUCTS[ev.i].name} — ${D.STRUCTS[ev.i].desc}`, 'lime', 6000);
+      } else if (ev.t === 'chall') {
+        FX.sfx.ach(); FX.flash();
+        FX.toast('Prüfung bestanden', `${ev.ch.name} Stufe ${ev.tier}: ${ev.ch.rewardText[ev.tier - 1]}`, 'gold', 7000);
+      } else if (ev.t === 'autopres') {
+        FX.resetNet();
+        FX.toast('Sporenflug (automatisch)', `+${U.fmtInt(ev.v)} Sporen`, 'gold');
+      } else if (ev.t === 'gold') {
+        FX.spawnGold((x, y) => {
+          const r = E.catchGold();
+          FX.sfx.gold();
+          FX.toast('✨ ' + r.def.name, r.instant !== undefined
+            ? `+${U.fmt(r.instant)} Biomasse sofort`
+            : r.def.d(r.mult), 'gold', 5200);
+          FX.pop(x, y - 30, r.def.name, '#f7c948');
+          UI.refreshTab();
+        });
+      }
+    }
+  }
+
+  /* ================= Hauptschleife ================= */
+  function loop(t) {
+    const dt = Math.min(0.25, (t - last) / 1000);
+    last = t;
+    E.tick(dt);
+    drainEvents();
+
+    // Netz-Wachstum an die Produktion koppeln
+    FX.setGrowSpeed(0.25 + Math.min(3.2, Math.log10(Math.max(1, E.total)) * 0.42));
+
+    uiAcc += dt;
+    if (uiAcc >= 0.1) {
+      uiAcc = 0;
+      UI.refreshTop();
+      UI.refreshTab();
+      UI.refreshTabs();
+    }
+    saveAcc += dt;
+    if (saveAcc >= 12) { saveAcc = 0; Save.write(); }
+    requestAnimationFrame(loop);
+  }
+
+  /* ================= Tasten ================= */
+  function initKeys() {
+    const tabKeys = { q: 'netz', w: 'baum', e: 'sporen', r: 'symbiose', t: 'pruefung', z: 'erfolge' };
+    window.addEventListener('keydown', ev => {
+      if (!S || U.$('#game').classList.contains('hidden')) return;
+      const tag = (ev.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      const k = ev.key.toLowerCase();
+      if (k >= '1' && k <= '8') { const i = +k - 1; if (E.buy(i) > 0) { FX.sfx.buy(); UI.refreshTab(); } }
+      else if (k === 'm') { let any = 0; for (let i = 7; i >= 0; i--) any += E.buy(i); if (any) { FX.sfx.buy(); UI.refreshTab(); } }
+      else if (k === ' ') { ev.preventDefault(); const g = E.doClick(true); FX.pop(FX.W / 2, FX.H / 2, '+' + U.fmt(g)); FX.sfx.click(); }
+      else if (k === 'p') prestige();
+      else if (k === 's') { Save.write(); FX.toast('Gespeichert', '', 'lime', 1600); }
+      else if (tabKeys[k]) UI.show(tabKeys[k]);
+      else if (k === 'escape') close();
+    });
+  }
+
+  /* ================= Start ================= */
+  function boot() {
+    FX.init();
+    initStart();
+    initKeys();
+    U.$('#btn-sound').onclick = () => { S.opt.sound = !S.opt.sound; UI.refreshTop(); if (S.opt.sound) FX.sfx.click(); };
+    U.$('#btn-menu').onclick = () => UI.show('optionen');
+    window.addEventListener('beforeunload', () => { if (S) Save.write(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && S) Save.write(); });
+  }
+
+  return { boot, enter, afterLoad, prestige, symbiose, enterChall, showLeaderboard, confirm: confirmBox, modal, close };
+})();
+
+window.addEventListener('DOMContentLoaded', Game.boot);

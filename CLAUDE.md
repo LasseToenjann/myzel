@@ -75,6 +75,13 @@ Richtwerte für einen pausenlos und optimal spielenden Bot:
   die bleibt beim Sporenflug stehen, waehrend die Produktion auf null faellt.
   Der Balken steht dann real still — gemessen 1 % nach einer halben Stunde. Wer
   daran etwas aendert, aendert Balance; die Anzeige loest es ueber `E.aufbau()`.
+- **Geschaetzte Restzeiten als Anzeige.** „noch ~2 h" ist eine Hochrechnung mit
+  der Produktion von jetzt. Sobald die einbricht — nach jedem Sporenflug —, steht
+  dort Unsinn (gemessen 763 Tage). Zwei echte Zahlen nebeneinander sagen mehr als
+  eine erfundene Dauer.
+- **Zahlen im deutschen Fliesstext.** `U.fmt` und `toFixed()` liefern beide einen
+  Punkt. Neben handgeschriebenen Kommazahlen liest sich das falsch: „hoch 0,35
+  (bei dir 0.371)". In `D.INFO` gibt es `komma()` dafuer.
 - **Zeit in der Bildschleife.** Der Schritt ist auf 0,25 s gedeckelt. Wer sich
   darauf verlässt, verliert jede Pause, in der die Seite schlief — auf dem iPad
   ist das der Normalfall. Immer gegen `Date.now()` prüfen, nicht gegen den
@@ -101,7 +108,11 @@ Immer gegenprüfen: 375×812 (Handy) und 768×1024 (iPad).
 
 ## Stand
 
-Version 2.5.1 — der Bestenlisten-Eintrag haelt sich auch im Wiederaufbau aktuell
+Version 2.6.0 — beim Reifegrad steht der genaue Stand statt einer geschaetzten
+Restzeit; drei i-Knoepfe erklaeren Reifegrad, Sporenflug und Symbiose mit den
+echten Formeln und den Zahlen des Spielers (`D.INFO` in `data.js`).
+
+Davor: Version 2.5.1 — der Bestenlisten-Eintrag haelt sich auch im Wiederaufbau aktuell
 (Herzschlag alle 5 min, feinerer Fingerabdruck).
 
 Davor: Version 2.5 — der Reifeschub verschenkt keine dauerhaften Reifegrade mehr; sein

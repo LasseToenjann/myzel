@@ -1,5 +1,40 @@
 # Änderungsverlauf
 
+## v2.6.0 – Zwei echte Zahlen statt einer erfundenen Dauer, und drei Erklärungen
+
+**Beim Reifegrad stand eine Restzeit.** Sie war eine Hochrechnung mit der
+Produktion von genau jetzt — und damit im Wiederaufbau wertlos: Eine Minute nach
+einem Sporenflug ergab sie gemessen *763 Tage*. Dort steht jetzt der genaue
+Stand:
+
+```
+alt:  noch ~2 h 14 min
+neu:  14.1 Mrd von 15.8 Mrd
+```
+
+Wie schnell sich die beiden Zahlen aneinander annähern, sieht man ohnehin.
+In der Aufbauphase bleibt es unverändert bei `10,6 K von 99,2 K /s` in Gold.
+
+**Drei Info-Fenster.** Nirgends stand, wann es Sporen gibt und wie Reifegrade
+entstehen. Ein kleines **i** öffnet jetzt die Erklärung:
+
+| Wo | Was drinsteht |
+|---|---|
+| Kopfzeile, neben *Reifegrad* | woraus er entsteht, die Leiter der Stufen (×2,51 je Stufe), was er einbringt, was ihn beschleunigt |
+| Reiter *Sporen*, neben ✺ *Sporenflug* | ab wann er sich öffnet (1 Mrd **im Durchlauf**), die Formel samt Exponent 0,35, wozu Sporen taugen, welche Skills den Ertrag heben |
+| Reiter *Symbiose*, neben ☭ *Symbiose* | die zwei Bedingungen, die Formel mit Exponent 0,25, was der Reset kostet, wofür die Punkte da sind |
+
+Die Texte werden **bei jedem Öffnen neu gebaut** und nennen die eigenen Zahlen
+des Spielers, nicht irgendein Beispiel — inklusive „eine Spore mehr wären es ab
+443 Mrd". Genannt werden die echten Formeln: Wer weiß, dass der Sporen-Exponent
+0,35 beträgt und dass die doppelte Sporenzahl das 7,2-fache an Biomasse
+verlangt, versteht auch, warum der zehnte Sporenflug so viel länger dauert als
+der erste.
+
+Die i-Knöpfe sind 19 px groß und haben eine unsichtbare 44-px-Fläche darum —
+sonst trifft man sie auf dem iPad nicht.
+
+
 ## v2.5.1 – Der eigene Eintrag blieb im Wiederaufbau stehen
 
 Gesendet wurde nur, wenn sich Reifegrad, die Größenordnung der Biomasse oder

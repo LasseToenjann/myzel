@@ -55,7 +55,7 @@ Gespielt wird auf kleinen Bildschirmen; der Desktop ist die Zugabe.
 | `js/state.js` | Spielstand anlegen, speichern, laden, migrieren |
 | `js/engine.js` | der gesamte Rechenweg, Käufe, Prestige, Erfolge, Offline |
 | `js/fx.js` | wachsendes Hintergrund-Myzel, Partikel, Toasts, Klänge, goldene Sporen |
-| `js/ui.js` | alle Reiter, der Skillbaum als SVG, die Kopfzeile |
+| `js/ui.js` | alle Reiter, der Skillbaum als SVG, die Kopfzeile, `zeigeInfo()` |
 | `js/music.js` | Klangteppich: Akkordfolge, Tropfentöne, Filter, Echo |
 | `js/leaderboard.js` | globale Bestenliste |
 | `js/main.js` | Startbildschirm, Spielschleife, Modale, Tasten |
@@ -297,6 +297,11 @@ ihr Reifewert den Reifegrad deckt — sonst behielten sie den toten Balken.
 Bleibende Multiplikatoren aus Skills und Mutationen wirken weiterhin rückwirkend;
 das ist gewollt und ändert an der Stufendauer nichts (über 24 Stufen nachgemessen).
 
+Unter dem Balken stand frueher eine Restzeit (`noch ~2 h`). Sie rechnete mit der
+Produktion von genau jetzt hoch und war damit im Wiederaufbau wertlos — eine
+Minute nach einem Sporenflug ergab sie gemessen 763 Tage. Dort stehen jetzt die
+beiden echten Werte aus `E.reifeStand()`: `14.1 Mrd von 15.8 Mrd`.
+
 **Nach einem Sporenflug bricht die Form.** `softReset()` setzt die Produktion auf
 null, `S.lifetime` bleibt aber stehen. Bis die Produktion wieder in der
 Größenordnung der insgesamt erzeugten Biomasse liefert, kann sich der Balken
@@ -462,6 +467,32 @@ Prüfen: fällt der Reifegrad in gleichmäßigen Schritten, oder gibt es einen S
 Meilensteine, Prüfungen, goldene Sporen, Offline-Kappe und beide Prestige-Schichten
 ohne stundenlanges Spielen.
 
+## Info-Fenster
+
+Die Erklaerungen zu Reifegrad, Sporenflug und Symbiose stehen als `D.INFO` in
+`js/data.js` — ein Eintrag je Thema mit `titel` und `html()`. `html()` ist eine
+**Funktion**, kein fertiger Text: Sie wird bei jedem Oeffnen ausgefuehrt und
+liest `S` und `E` frisch, damit die genannten Zahlen die des Spielers sind.
+`UI.zeigeInfo(id)` haengt sie in `Game.modal`.
+
+Ausgeloest wird alles ueber ein einziges `data-info="id"` am Knopf und einen
+delegierten Zuhoerer auf `document` — so funktionieren auch die Knoepfe, die
+erst beim Aufbau eines Reiters entstehen.
+
+Zwei Dinge, die dort schon schiefgingen:
+
+- **Punkt statt Komma.** `U.fmt` trennt seit jeher mit Punkt, von Hand gerechnete
+  Zahlen kommen aus `toFixed()` ebenfalls mit Punkt. Im Fliesstext stand dann
+  „hoch 0,35 (bei dir 0.371)". Dafuer gibt es `komma()`.
+- **Zwei Bedingungen als eine behandelt.** Der Symbiose-Text meldete „bis zum
+  ersten Punkt fehlen noch 0", wenn genug Sporen da waren, aber der Skill
+  `t_sym` fehlte. `E.spGain()` gibt ohne den Skill null zurueck — die beiden
+  Bedingungen muessen getrennt geprueft und getrennt gemeldet werden.
+
+Ein neues Thema braucht also: Eintrag in `D.INFO`, ein
+`<button class="info-i" data-info="…">i</button>` an der passenden Stelle, und
+eine Zeile in `info_test.js`.
+
 ## Erweitern
 
 - **Neue Struktur**: Eintrag in `D.STRUCTS`. Kostenwachstum über 1,10 halten.
@@ -470,6 +501,7 @@ ohne stundenlanges Spielen.
   Knoten desselben Astes.
 - **Neue Mutation oder neues Biom**: Einträge in `D.MUTATIONS` bzw. `D.BIOMES`.
 - **Neuer Erfolg**: `A(id, name, beschreibung, bedingung)` in `data.js`.
+- **Neues Info-Fenster**: Eintrag in `D.INFO` und ein Knopf mit `data-info`.
 
 Nach jeder Änderung an Zahlen: Simulation laufen lassen und
 [AENDERUNGEN.md](AENDERUNGEN.md) ergänzen.

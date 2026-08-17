@@ -30,6 +30,10 @@ sie zum ersten Mal auftaucht.
 Oben steht immer, was das **nächste Ziel** ist. Wer nicht weiß, was als Nächstes
 dran ist, schaut dorthin.
 
+Ein kleines **i** steht neben *Reifegrad* in der Kopfzeile und neben den
+Überschriften in den Reitern *Sporen* und *Symbiose*. Dahinter liegt jeweils die
+ganze Erklärung — mit den echten Formeln und deinen eigenen Zahlen.
+
 ## Die Reiter
 
 **Netz** — Hier wird geklickt und gekauft. Der Kern in der Mitte zeigt deinen Stand:
@@ -93,6 +97,45 @@ zurück ins Startmenü, um den Spielstand zu wechseln.
 - **Musik**: ein ruhiger Klangteppich, der laufend neu entsteht und sich nie
   wiederholt. Standardmäßig aus — einschalten über das ♫ oben rechts.
 - Die **Optionen** liegen hinter den drei Strichen oben rechts.
+
+## Wie Reifegrade entstehen
+
+Gezählt wird die **insgesamt je erzeugte Biomasse**, mal deiner Reifung.
+Ausgeben schadet nicht: Was einmal gewachsen ist, bleibt gezählt. Nur die
+Start-Biomasse nach einem Reset zählt nicht mit.
+
+Jede Stufe verlangt das **2,51-fache** der vorigen — eine feste Leiter:
+
+| Reifegrad | 1 | 5 | 10 | 20 | 30 | 40 |
+|---|---|---|---|---|---|---|
+| Biomasse gesamt | 25 | 1 K | 100 K | 1 Mrd | 10 Bio | 100 Brd |
+
+Weil deine Produktion in ähnlichen Sprüngen wächst, dauert ein Reifegrad
+ungefähr so lang wie der vorige. Unter dem Balken steht der genaue Stand
+(`14.1 Mrd von 15.8 Mrd`).
+
+Es gibt **einen Wachstumspunkt je Stufe**, ab Reifegrad 10 zwei, ab 20 drei,
+ab 30 vier — und alle 25 Stufen drei zusätzliche. Schneller geht es mit 🧺
+*Kompost*, 📖 *Reifebeschleunigung*, der Mutation 📖 *Reifebeschleuniger* und
+der goldenen Spore 📖 *Reifeschub*.
+
+## Wann es Sporen gibt
+
+Der Sporenflug öffnet sich, sobald du **in einem Durchlauf** 1 Mrd Biomasse
+erzeugt hast. Gemeint ist der Durchlauf-Zähler, nicht die Gesamtsumme: Er fängt
+nach jedem Flug wieder bei null an, und Start-Biomasse aus Skills zählt nicht
+mit.
+
+Wie viele Sporen es sind: Durchlauf-Biomasse geteilt durch 1 Mrd, hoch **0,35**,
+abgerundet. Dieser Exponent ist die Bremse des ganzen Spiels — für **doppelt so
+viele Sporen** brauchst du rund das **7,2-fache** an Biomasse.
+
+Sporen wirken doppelt: Die **insgesamt gesammelten** geben dauerhaft Produktion,
+die **verfügbaren** kaufen Mutationen. Ausgeben schadet dem Bonus nicht.
+
+Die **Symbiose** verlangt zweierlei: den Skill ⚭ *Symbiose-Zugang* und 1 Mio
+insgesamt gesammelte Sporen. Punkte gibt es nach derselben Idee mit Exponent
+**0,25** — die 16-fache Sporenmenge für doppelt so viele Punkte.
 
 ## Nach einem Sporenflug
 

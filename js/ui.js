@@ -691,7 +691,8 @@ const UI = (() => {
     const p = panel('sporen');
     p.innerHTML = `
       <div class="prestige-box">
-        <h3>✺ Sporenflug</h3>
+        <h3>✺ Sporenflug<button class="info-i" data-info="sporen"
+          title="Wann es Sporen gibt" aria-label="Erklärung zum Sporenflug">i</button></h3>
         <div class="pb-gain"><span id="sp-gain">0</span> <span class="pb-unit">Sporen</span></div>
         <div class="pb-sub" id="sp-sub"></div>
         <div class="pbar"><div id="sp-bar"></div></div>
@@ -792,7 +793,8 @@ const UI = (() => {
     const p = panel('symbiose');
     p.innerHTML = `
       <div class="prestige-box violet">
-        <h3>☭ Symbiose</h3>
+        <h3>☭ Symbiose<button class="info-i" data-info="symbiose"
+          title="Wann sich die Symbiose öffnet" aria-label="Erklärung zur Symbiose">i</button></h3>
         <div class="pb-gain"><span id="sy-gain">0</span> <span class="pb-unit">Symbiose-Punkte</span></div>
         <div class="pb-sub" id="sy-sub"></div>
         <div class="pbar v"><div id="sy-bar"></div></div>
@@ -1147,6 +1149,27 @@ const UI = (() => {
     setText(e, sek < 3 ? 'Gerade eben gesichert.' : 'Zuletzt vor ' + U.fmtTimeShort(sek) + '.');
   }
 
+  /* ================= Info-Fenster ================= */
+  /** Oeffnet die Erklaerung zu einem Spielteil. Die Texte stehen in D.INFO und
+      werden bei jedem Oeffnen neu gebaut, damit die genannten Zahlen die des
+      Spielers sind und nicht irgendein Beispiel. */
+  function zeigeInfo(id) {
+    const i = D.INFO[id];
+    if (!i) return;
+    Game.modal(`<h3>${i.titel}</h3><div class="info-text">${i.html()}</div>
+      <div class="mrow"><button class="btn btn-primary" id="i-ok">Alles klar</button></div>`,
+      m => { U.$('#i-ok', m).onclick = Game.close; });
+  }
+
+  /* Ein einziger Zuhoerer fuer alle i-Knoepfe - die in der festen Kopfzeile
+     ebenso wie die, die erst beim Aufbau eines Reiters entstehen. */
+  document.addEventListener('click', ev => {
+    const b = ev.target.closest && ev.target.closest('[data-info]');
+    if (!b) return;
+    ev.preventDefault();
+    zeigeInfo(b.dataset.info);
+  });
+
   /* ================= Kopfzeile ================= */
   function refreshTop() {
     U.$('#t-biomass').textContent = U.fmt(S.biomass);
@@ -1162,7 +1185,7 @@ const UI = (() => {
     U.$('#t-xptxt').textContent = auf.aktiv ? 'Aufbau' : (p * 100).toFixed(1) + ' %';
     setText(U.$('#t-xpeta'), auf.aktiv
       ? U.fmt(auf.rate) + ' von ' + U.fmt(auf.ziel) + ' /s'
-      : reifeRestzeit());
+      : reifeText());
     U.$('#t-wp').textContent = U.fmtInt(E.wpAvail());
     const sw = U.$('#t-spore-wrap');
     sw.classList.toggle('hidden', S.sporeLife === 0 && S.sporen === 0);
@@ -1175,18 +1198,14 @@ const UI = (() => {
     refreshBuffs();
   }
 
-  /** Grobe Restzeit bis zum naechsten Reifegrad, bei gleichbleibender
-      Produktion. Jeder Reifegrad braucht die 2,5-fache Biomasse - ohne
-      diese Angabe wirkt der Balken mitten im Spiel wie eingefroren,
-      obwohl er sich voellig normal verhaelt. */
-  /* Waehrend der Aufbauphase ist diese Schaetzung wertlos - gemessen ergab
-     sie eine Minute nach dem Sporenflug 763 Tage. Dort steht stattdessen der
-     Aufbau-Stand. */
-  function reifeRestzeit() {
+  /** Der genaue Reifestand unter dem Balken: erreichter Wert von Zielwert.
+      Hier stand frueher eine Restzeit. Die war eine Hochrechnung mit der
+      Produktion von jetzt und damit im Aufbau voellig wertlos - gemessen ergab
+      sie eine Minute nach dem Sporenflug 763 Tage. Zwei echte Zahlen sagen mehr
+      als eine erfundene Dauer; wie schnell sie sich fuellen, sieht man ohnehin. */
+  function reifeText() {
     const r = E.reifeStand();
-    if (r.fehlt <= 0) return 'gleich so weit';
-    if (r.rate <= 0) return '';
-    return 'noch ~' + U.fmtTimeShort(r.fehlt / r.rate);
+    return U.fmt(r.wert) + ' von ' + U.fmt(r.ziel);
   }
 
   /** Laufende Buffs der goldenen Sporen mit Restzeit. */
@@ -1222,5 +1241,6 @@ const UI = (() => {
   }
 
   return { initTabs, show, refreshTop, refreshTab, refreshAll, refreshTabs, refreshTree, pulse, fitTree,
+    zeigeInfo,
     get active() { return active; } };
 })();

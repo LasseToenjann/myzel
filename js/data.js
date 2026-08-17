@@ -801,9 +801,160 @@ const D = (() => {
   const BUFF_BY_ID = {};
   BUFFS.forEach(b => BUFF_BY_ID[b.id] = b);
 
+  /* ================= INFO-TEXTE ================= */
+  /* Werden erst beim Oeffnen gebaut, damit die Zahlen die des Spielers sind.
+     Erklaert wird bewusst die echte Formel: Wer weiss, dass der Sporen-Exponent
+     0,35 betraegt, versteht auch, warum der zehnte Sporenflug so viel laenger
+     dauert als der erste. */
+  /** Von Hand gerechnete Zahlen deutsch schreiben. U.fmt macht das nicht,
+      dort ist der Punkt seit jeher das Trennzeichen. */
+  const komma = x => String(x).replace('.', ',');
+  /** Einzahl oder Mehrzahl - "1 Punkte" liest sich wie ein Fehler. */
+  const zahlwort = (n, ein, viele) => n === 1 ? '1 ' + ein : U.fmtInt(n) + ' ' + viele;
+
+  const INFO = {
+
+    reife: {
+      titel: '📖 Reifegrad',
+      html: () => {
+        const r = E.reifeStand();
+        const p = (E.levelProgress() * 100).toFixed(1);
+        const leiter = [1, 5, 10, 20, 30, 40]
+          .map(L => `Grad ${L}: <b>${U.fmt(E.lifetimeForLevel(L))}</b>`).join(' &nbsp;·&nbsp; ');
+        return `
+          <p>Der Reifegrad ist der lange Faden des Spiels. Er überdauert jeden
+            Sporenflug und jede Symbiose und <b>sinkt nie</b>.</p>
+
+          <h4>Woraus er entsteht</h4>
+          <p>Gezählt wird die <b>insgesamt je erzeugte Biomasse</b> — mal deiner
+            Reifung, die gerade bei ${U.fmtMul(E.m.xpDauer)} liegt. Ausgeben schadet
+            nicht: Was einmal gewachsen ist, bleibt gezählt. Nur die Start-Biomasse
+            nach einem Reset zählt nicht mit, die ist geschenkt.</p>
+
+          <h4>Wie die Stufen liegen</h4>
+          <p>Jede Stufe verlangt das <b>2,51-fache</b> der vorigen. Das ist eine
+            feste Leiter, unabhängig davon, was du tust:</p>
+          <p class="info-leiter">${leiter}</p>
+          <p>Weil deine Produktion in ähnlichen Sprüngen wächst, dauert ein
+            Reifegrad ungefähr so lang wie der vorige. Nach einem Sporenflug
+            stockt er dagegen sichtbar — dann steht im Balken <b>Aufbau</b>, und
+            darunter, wie weit die Produktion wieder ist.</p>
+
+          <h4>Was er einbringt</h4>
+          <p>Wachstumspunkte für den Skillbaum: einen je Stufe, ab Reifegrad 10
+            zwei, ab 20 drei, ab 30 vier — und alle 25 Stufen drei zusätzliche.
+            Verdient hast du bisher <b>${U.fmtInt(E.wpTotal())}</b>.</p>
+
+          <h4>Was ihn beschleunigt</h4>
+          <p>Skill <b>Kompost</b> (+15 % je Stufe), Skill <b>Reifebeschleunigung</b>
+            (+25 %), Mutation <b>Reifebeschleuniger</b> (×1,5 je Stufe) und die
+            goldene Spore <b>Reifeschub</b> (×5 für zwei Minuten).</p>
+
+          <p class="info-stand">Dein Stand: <b>${U.fmt(r.wert)}</b> von
+            <b>${U.fmt(r.ziel)}</b> — das sind ${komma(p)} % auf dem Weg zu Reifegrad
+            ${S.level + 1}.</p>`;
+      }
+    },
+
+    sporen: {
+      titel: '✺ Sporenflug',
+      html: () => {
+        const g = E.sporeGain();
+        const exp = 0.35 + E.m.sporeExp;
+        const naechste = Math.pow((g + 1) / Math.max(1e-9, E.m.spore), 1 / exp) * 1e9;
+        const faktor = Math.pow(2, 1 / exp);
+        const stand = g >= 1
+          ? `Dein Durchlauf steht bei <b>${U.fmt(S.runTotal)}</b> — das gäbe
+             <b>${zahlwort(g, 'Spore', 'Sporen')}</b>. Eine mehr wären es ab
+             <b>${U.fmt(naechste)}</b>.`
+          : `Dein Durchlauf steht bei <b>${U.fmt(S.runTotal)}</b>. Bis zur ersten
+             Spore fehlen noch <b>${U.fmt(Math.max(0, 1e9 - S.runTotal))}</b>.`;
+        return `
+          <p>Der Sporenflug ist der erste Neuanfang. Biomasse und Strukturen
+            fallen weg — alles andere bleibt: Skillbaum, Mutationen, Erfolge,
+            Reifegrad und jede je gesammelte Spore.</p>
+
+          <h4>Wann er sich öffnet</h4>
+          <p>Sobald du <b>in einem Durchlauf</b> 1 Mrd Biomasse erzeugt hast.
+            Gemeint ist der Durchlauf-Zähler, nicht die Gesamtsumme: Er fängt nach
+            jedem Flug wieder bei null an, und Start-Biomasse aus Skills zählt
+            nicht mit.</p>
+
+          <h4>Wie viele Sporen</h4>
+          <p>Durchlauf-Biomasse geteilt durch 1 Mrd, hoch <b>0,35</b> (bei dir
+            ${komma(exp.toFixed(3))}), abgerundet. Dieser Exponent ist die Bremse
+            des ganzen Spiels: Für <b>doppelt so viele Sporen</b> brauchst du das
+            <b>${komma(faktor.toFixed(1))}-fache</b> an Biomasse.</p>
+
+          <h4>Wozu sie taugen</h4>
+          <p><b>Gesammelte</b> Sporen geben dauerhaft Produktion${S.sporeLife > 0
+              ? ` — gerade ${U.fmtMul(E.sporeMult(S.sporeLife))} aus
+                 ${U.fmtInt(S.sporeLife)} Stück` : ''}. Dieser Bonus bleibt auch
+            dann, wenn du Sporen ausgibst.</p>
+          <p><b>Verfügbare</b> Sporen kaufen Mutationen. Auch die bleiben für immer.</p>
+
+          <h4>Was den Ertrag hebt</h4>
+          <p><b>Am Exponenten</b> (der stärkste Hebel): Skills <b>Tiefe Wurzeln</b>
+            und <b>Urwurzeln</b>, Mutation <b>Ewige Sporen</b>, Biom <b>Tiefsee</b>.</p>
+          <p><b>Am Faktor:</b> Skills <b>Nachtwuchs</b> und <b>Sporensturm</b>,
+            Mutation <b>Sporenwind</b>.</p>
+          <p><b>Am Wiederaufbau danach:</b> <b>Erinnerung</b> und <b>Schnelles Erbe</b>
+            behalten einen Teil deiner Strukturen, <b>Nährstoffdepot</b>,
+            <b>Totholz</b> und <b>Sporenspeicher</b> geben Start-Biomasse.</p>
+
+          <p class="info-stand">${stand}</p>`;
+      }
+    },
+
+    symbiose: {
+      titel: '☭ Symbiose',
+      html: () => {
+        /* Zwei Bedingungen, die unabhaengig voneinander offen sein koennen -
+           deshalb erst der Skill, dann die Sporen, und beides getrennt. */
+        const roh = Math.floor(Math.pow(Math.max(0, S.sporeLife) / 1e6, 0.25));
+        const naechste = Math.pow(roh + 1, 1 / 0.25) * 1e6;
+        const sporenSatz = S.sporeLife < 1e6
+          ? `Gesammelt hast du <b>${U.fmtInt(S.sporeLife)}</b> Sporen — bis zum
+             ersten Punkt fehlen noch <b>${U.fmt(1e6 - S.sporeLife)}</b>.`
+          : `Gesammelt hast du <b>${U.fmtInt(S.sporeLife)}</b> Sporen — das ${roh === 1
+               ? 'ist' : 'sind'} <b>${zahlwort(roh, 'Punkt', 'Punkte')}</b>. Einen mehr
+             wären es ab <b>${U.fmt(naechste)}</b> Sporen.`;
+        const stand = E.symUnlocked()
+          ? sporenSatz
+          : `Der Skill <b>Symbiose-Zugang</b> fehlt dir noch. ` + sporenSatz;
+        return `
+          <p>Die Symbiose ist der zweite, tiefere Neuanfang — und die letzte
+            Schicht des Spiels.</p>
+
+          <h4>Wann sie sich öffnet</h4>
+          <p>Zwei Bedingungen: der Skill <b>Symbiose-Zugang</b> im Ast „Tiefe“,
+            und <b>1 Mio insgesamt gesammelte Sporen</b>.</p>
+
+          <h4>Wie viele Punkte</h4>
+          <p>Gesammelte Sporen geteilt durch 1 Mio, hoch <b>0,25</b>, abgerundet.
+            Für doppelt so viele Punkte brauchst du die <b>16-fache</b>
+            Sporenmenge.</p>
+
+          <h4>Was sie kostet</h4>
+          <p>Deutlich mehr als ein Sporenflug: Sporen, Mutationen und Sporenflüge
+            werden vollständig zurückgesetzt — samt dem Produktions-Bonus aus den
+            gesammelten Sporen. Es bleiben Skillbaum, Reifegrad, Erfolge, deine
+            Biome und die Symbiose-Punkte.</p>
+
+          <h4>Wofür die Punkte</h4>
+          <p>Für Biome, der Reihe nach. Das sind die größten dauerhaften
+            Multiplikatoren im Spiel — der Laubwald verdreifacht die Produktion,
+            der Urwald ver-25-facht sie.</p>
+
+          <p class="info-stand">${stand}</p>`;
+      }
+    }
+  };
+
   return {
     STRUCTS, MILESTONE_STEP, BRANCHES, NODES, NODE_BY_ID, nodePos, nodeCost, branchTip, branchInfo, wegForm, kopfForm, WEAVES,
     SEKTOR,
-    MUTATIONS, MUT_BY_ID, mutCost, GRUPPEN_NAME, BIOMES, ACH, ACH_GRUPPEN, NEWS, BUFFS, BUFF_BY_ID
+    MUTATIONS, MUT_BY_ID, mutCost, GRUPPEN_NAME, BIOMES, ACH, ACH_GRUPPEN, NEWS, BUFFS, BUFF_BY_ID,
+    INFO
   };
 })();

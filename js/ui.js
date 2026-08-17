@@ -515,7 +515,7 @@ const UI = (() => {
     let hinweis = '';
     if (st.gated) hinweis = st.grund;
     else if (!st.parentOk) hinweis = `Zuerst nötig: <b>${D.NODE_BY_ID[n.req].name}</b>`;
-    else if (!st.maxed && frei < st.cost) hinweis = `Noch ${U.fmtInt(st.cost - frei)} Wachstumspunkte nötig.`;
+    else if (!st.maxed && frei < st.cost) hinweis = `Noch ${U.fmtInt(st.cost - frei)} Wachstumspunkt${st.cost - frei === 1 ? '' : 'e'} nötig.`;
     setHTML(R.npReq, hinweis);
     R.npReq.classList.toggle('hidden', !hinweis);
 
